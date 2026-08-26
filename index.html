@@ -1,420 +1,3502 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KongoVibe</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0b0f19">
-    <style>
-        :root {
-            --bg-dark: #0b0f19;
-            --bg-card: #131b2e;
-            --bg-input: #1b2640;
-            --accent-yellow: #facc15;
-            --primary-blue: #3b82f6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #223049;
-            --chat-bubble: #1e293b;
-            --chat-me: #2563eb;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .hidden { display: none !important; }
-        #app-container { flex: 1; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#070b14">
+<meta name="description" content="Plateforme sociale nouvelle génération : messages, vidéos, appels, statuts et communautés.">
+<title>KongoVibe — Social Experience</title>
 
-        /* Écrans */
-        .screen { padding: 24px 20px; display: flex; flex-direction: column; min-height: 100%; justify-content: center; }
-        .brand-header { text-align: center; margin-bottom: 24px; }
-        .login-logo { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 10px; border: 2px solid var(--accent-yellow); }
-        .brand-header h1 { font-size: 1.8rem; font-weight: 800; }
-        .welcome-text { margin-bottom: 24px; }
-        .welcome-text h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
-        .welcome-text p { font-size: 0.85rem; color: var(--text-muted); }
-        
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
-        .input-box { position: relative; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 14px; display: flex; align-items: center; padding: 0 14px; }
-        .input-box input { width: 100%; background: none; border: none; padding: 14px 0; color: var(--text-main); font-size: 0.9rem; outline: none; }
-        
-        .btn-primary { width: 100%; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-        .signup-prompt { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin: 20px 0; }
-        .highlight-link { color: var(--accent-yellow); text-decoration: none; font-weight: 600; cursor: pointer; }
+<style>
+/* =========================================================
+   KONGOVIBE — DESIGN SYSTEM
+========================================================= */
 
-        /* Application principale */
-        .tab-content { display: none; padding: 16px; padding-bottom: 90px; flex: 1; overflow-y: auto; }
-        .tab-content.active { display: block; }
-        .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .tab-header h2 { font-size: 1.5rem; font-weight: 800; }
-        
-        .icon-circle-btn { background: var(--bg-card); border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; }
-        .search-bar-container { position: relative; margin-bottom: 20px; }
-        .search-bar-container input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); padding: 12px 16px 12px 42px; border-radius: 24px; color: var(--text-main); font-size: 0.85rem; outline: none; }
-        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); }
+:root{
+    --bg:#05070d;
+    --bg2:#0a0f1a;
+    --card:#0d1422;
+    --card2:#111b2b;
+    --border:rgba(255,255,255,.09);
+    --text:#f5f7fb;
+    --muted:#8792a6;
+    --accent:#d49b28;
+    --accent2:#ffcf63;
+    --danger:#ff4d67;
+    --success:#35d07f;
+    --blue:#4f8cff;
+    --shadow:0 20px 60px rgba(0,0,0,.4);
+    --radius:22px;
+}
 
-        /* Liste chats */
-        .chat-list { display: flex; flex-direction: column; gap: 16px; }
-        .chat-item { display: flex; align-items: center; gap: 14px; cursor: pointer; }
-        .avatar-badge { width: 48px; height: 48px; border-radius: 50%; background: #0ea5e9; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
-        .avatar-badge.red { background: #ef4444; }
-        .avatar-badge.purple { background: #8b5cf6; }
-        .avatar-badge.green { background: #10b981; }
-        .chat-info { flex: 1; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
-        .chat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .chat-name-row h4 { font-size: 0.95rem; font-weight: 700; }
-        .time { font-size: 0.75rem; color: var(--text-muted); }
-        .chat-info p { font-size: 0.82rem; color: var(--text-muted); }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
-        /* Vue Conversation interactive (Style WhatsApp) */
-        #chat-room { display: none; flex-direction: column; height: 100vh; position: absolute; top: 0; left: 0; width: 100%; background: var(--bg-dark); z-index: 200; }
-        .chat-room-header { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); }
-        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
-        .chat-messages-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
-        .message-bubble { max-width: 75%; padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.4; word-break: break-word; }
-        .message-bubble.incoming { background: var(--chat-bubble); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .message-bubble.outgoing { background: var(--chat-me); align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-input-area { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); padding: 10px 16px; display: flex; gap: 10px; border-top: 1px solid var(--border-color); align-items: center; }
-        .chat-input-area input { flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); padding: 12px; border-radius: 24px; color: white; outline: none; font-size: 0.9rem; }
-        .send-btn { background: var(--accent-yellow); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; color: #000; }
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+}
 
-        /* Modal Invitation / Nouveau Contact */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 500; padding: 20px; }
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px; }
-        .modal-content h3 { font-size: 1.2rem; }
-        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
-        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: white; padding: 10px 16px; border-radius: 10px; cursor: pointer; }
-        .btn-accent { background: var(--accent-yellow); border: none; color: #000; font-weight: 700; padding: 10px 16px; border-radius: 10px; cursor: pointer; }
+body{
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:
+        radial-gradient(circle at 20% 10%,rgba(212,155,40,.08),transparent 30%),
+        radial-gradient(circle at 80% 80%,rgba(79,140,255,.06),transparent 30%),
+        var(--bg);
+    color:var(--text);
+}
 
-        /* Reels */
-        .reels-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 10px; }
-        .reel-view { height: calc(100vh - 160px); background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('logo.jpg'); background-size: cover; background-position: center; border-radius: 16px; position: relative; display: flex; align-items: flex-end; padding: 20px; border: 1px solid var(--border-color); }
-        .reel-overlay-content { z-index: 2; max-width: 80%; }
-        .reel-author-box { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .avatar-mini { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-        .reel-username { font-weight: 700; font-size: 0.9rem; }
-        .reel-caption { font-size: 0.85rem; line-height: 1.4; margin-bottom: 8px; }
-        .reel-audio { font-size: 0.75rem; color: var(--text-muted); }
-        .reel-sidebar-actions { position: absolute; right: 16px; bottom: 24px; display: flex; flex-direction: column; gap: 14px; align-items: center; z-index: 3; }
-        .reel-act-btn { background: none; border: none; color: white; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 1.3rem; cursor: pointer; }
-        .reel-act-btn span { font-size: 0.65rem; font-weight: 600; }
+/* =========================================================
+   APP
+========================================================= */
 
-        /* Navigation du bas */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #0f172a; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); }
-        .nav-btn.active { color: var(--text-main); }
-        .btn-plus span { background: var(--accent-yellow); color: #000; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; font-size: 1.2rem; }
-    </style>
+.app{
+    width:100%;
+    height:100vh;
+    display:flex;
+    position:relative;
+}
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar{
+    width:245px;
+    height:100%;
+    padding:22px 15px;
+    border-right:1px solid var(--border);
+    background:rgba(5,7,13,.82);
+    backdrop-filter:blur(25px);
+    display:flex;
+    flex-direction:column;
+    z-index:20;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:35px;
+    padding:0 8px;
+}
+
+.logo-symbol{
+    width:44px;
+    height:44px;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--accent),#f2c45e);
+    color:#101010;
+    display:grid;
+    place-items:center;
+    font-weight:900;
+    font-size:22px;
+    box-shadow:0 8px 30px rgba(212,155,40,.25);
+}
+
+.logo-text{
+    font-size:19px;
+    font-weight:800;
+    letter-spacing:.4px;
+}
+
+.logo-text span{
+    color:var(--accent2);
+}
+
+.nav{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.nav-btn{
+    border:0;
+    background:transparent;
+    color:var(--muted);
+    width:100%;
+    padding:13px 14px;
+    border-radius:15px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size:14px;
+    text-align:left;
+    transition:.2s;
+}
+
+.nav-btn:hover{
+    background:rgba(255,255,255,.05);
+    color:white;
+}
+
+.nav-btn.active{
+    background:linear-gradient(
+        90deg,
+        rgba(212,155,40,.18),
+        rgba(212,155,40,.04)
+    );
+    color:var(--accent2);
+}
+
+.nav-icon{
+    width:22px;
+    text-align:center;
+    font-size:18px;
+}
+
+.sidebar-bottom{
+    margin-top:auto;
+}
+
+.profile-mini{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    object-fit:cover;
+    background:linear-gradient(135deg,#292f3d,#131824);
+}
+
+.profile-mini strong{
+    font-size:13px;
+}
+
+.profile-mini small{
+    display:block;
+    color:var(--muted);
+    margin-top:3px;
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main{
+    flex:1;
+    height:100%;
+    min-width:0;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+}
+
+.topbar{
+    height:74px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+    background:rgba(5,7,13,.65);
+    backdrop-filter:blur(20px);
+    z-index:10;
+}
+
+.page-title{
+    font-size:20px;
+    font-weight:800;
+}
+
+.top-actions{
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+.icon-btn{
+    width:40px;
+    height:40px;
+    border:1px solid var(--border);
+    border-radius:13px;
+    background:var(--card);
+    color:white;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.icon-btn:hover{
+    transform:translateY(-1px);
+    border-color:rgba(212,155,40,.35);
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.content{
+    flex:1;
+    overflow:auto;
+    padding:25px;
+}
+
+.page{
+    display:none;
+    max-width:1200px;
+    margin:auto;
+    animation:pageIn .25s ease;
+}
+
+.page.active{
+    display:block;
+}
+
+@keyframes pageIn{
+    from{
+        opacity:0;
+        transform:translateY(7px);
+    }
+    to{
+        opacity:1;
+        transform:none;
+    }
+}
+
+/* =========================================================
+   HOME
+========================================================= */
+
+.hero{
+    min-height:210px;
+    padding:30px;
+    border:1px solid var(--border);
+    border-radius:28px;
+    background:
+        radial-gradient(circle at 85% 20%,rgba(212,155,40,.2),transparent 35%),
+        linear-gradient(135deg,#111a29,#090e17);
+    position:relative;
+    overflow:hidden;
+    margin-bottom:22px;
+}
+
+.hero h1{
+    font-size:32px;
+    max-width:600px;
+}
+
+.hero p{
+    color:var(--muted);
+    margin-top:10px;
+    max-width:600px;
+    line-height:1.6;
+}
+
+.hero-buttons{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+}
+
+.primary{
+    border:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#101010;
+    padding:12px 18px;
+    border-radius:13px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.secondary{
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.04);
+    color:white;
+    padding:12px 18px;
+    border-radius:13px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.section-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:25px 0 13px;
+}
+
+.section-title h2{
+    font-size:18px;
+}
+
+.section-title span{
+    color:var(--muted);
+    font-size:12px;
+}
+
+/* =========================================================
+   STORIES
+========================================================= */
+
+.stories{
+    display:flex;
+    gap:13px;
+    overflow-x:auto;
+    padding-bottom:5px;
+}
+
+.story{
+    min-width:85px;
+    cursor:pointer;
+    text-align:center;
+}
+
+.story-ring{
+    width:68px;
+    height:68px;
+    padding:3px;
+    border-radius:50%;
+    margin:auto;
+    background:linear-gradient(135deg,var(--accent),#ff5c8a,var(--blue));
+}
+
+.story-inner{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    border:3px solid var(--bg);
+    object-fit:cover;
+}
+
+.story-name{
+    font-size:11px;
+    margin-top:7px;
+    color:#cbd2df;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+/* =========================================================
+   FEED
+========================================================= */
+
+.feed{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 310px;
+    gap:20px;
+}
+
+.post{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:17px;
+    margin-bottom:16px;
+}
+
+.post-head{
+    display:flex;
+    align-items:center;
+    gap:11px;
+}
+
+.post-head-info{
+    flex:1;
+}
+
+.post-head-info strong{
+    font-size:14px;
+}
+
+.post-head-info small{
+    display:block;
+    color:var(--muted);
+    margin-top:3px;
+}
+
+.post-text{
+    margin:15px 0;
+    line-height:1.55;
+    color:#dce2ed;
+}
+
+.post-media{
+    width:100%;
+    max-height:480px;
+    object-fit:cover;
+    border-radius:18px;
+    background:#05070d;
+}
+
+.post-actions{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+}
+
+.post-action{
+    border:0;
+    background:transparent;
+    color:var(--muted);
+    padding:8px 10px;
+    cursor:pointer;
+    border-radius:10px;
+}
+
+.post-action:hover{
+    background:rgba(255,255,255,.05);
+    color:white;
+}
+
+.post-action.liked{
+    color:#ff5d76;
+}
+
+/* =========================================================
+   TRENDING
+========================================================= */
+
+.trending-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+    position:sticky;
+    top:0;
+}
+
+.trend{
+    padding:13px 0;
+    border-bottom:1px solid var(--border);
+}
+
+.trend:last-child{
+    border-bottom:0;
+}
+
+.trend small{
+    color:var(--muted);
+}
+
+.trend strong{
+    display:block;
+    margin-top:4px;
+}
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+.messages-layout{
+    height:calc(100vh - 125px);
+    display:grid;
+    grid-template-columns:320px 1fr;
+    border:1px solid var(--border);
+    border-radius:22px;
+    overflow:hidden;
+    background:var(--card);
+}
+
+.conversations{
+    border-right:1px solid var(--border);
+    overflow:auto;
+}
+
+.search{
+    margin:15px;
+    width:calc(100% - 30px);
+    border:1px solid var(--border);
+    background:#080d17;
+    color:white;
+    border-radius:12px;
+    padding:11px 13px;
+    outline:none;
+}
+
+.conversation{
+    display:flex;
+    gap:11px;
+    padding:13px 15px;
+    cursor:pointer;
+    border-left:3px solid transparent;
+}
+
+.conversation:hover,
+.conversation.active{
+    background:rgba(255,255,255,.045);
+    border-left-color:var(--accent);
+}
+
+.conversation-info{
+    flex:1;
+    min-width:0;
+}
+
+.conversation-info strong{
+    font-size:13px;
+}
+
+.conversation-info p{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.chat{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.chat-header{
+    height:68px;
+    padding:10px 16px;
+    display:flex;
+    align-items:center;
+    gap:11px;
+    border-bottom:1px solid var(--border);
+}
+
+.chat-header-info{
+    flex:1;
+}
+
+.chat-header-info strong{
+    font-size:14px;
+}
+
+.chat-header-info small{
+    display:block;
+    color:var(--success);
+    margin-top:3px;
+}
+
+.chat-actions{
+    display:flex;
+    gap:6px;
+}
+
+.chat-body{
+    flex:1;
+    overflow:auto;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+
+.message{
+    max-width:70%;
+    padding:10px 13px;
+    border-radius:17px;
+    font-size:13px;
+    line-height:1.45;
+}
+
+.message.me{
+    align-self:flex-end;
+    background:linear-gradient(135deg,#9c701f,#d49b28);
+    color:#111;
+    border-bottom-right-radius:5px;
+}
+
+.message.other{
+    align-self:flex-start;
+    background:#172131;
+    border-bottom-left-radius:5px;
+}
+
+.message-time{
+    font-size:9px;
+    opacity:.55;
+    margin-top:4px;
+    text-align:right;
+}
+
+.chat-input{
+    border-top:1px solid var(--border);
+    padding:12px;
+    display:flex;
+    gap:8px;
+}
+
+.chat-input input{
+    flex:1;
+    border:1px solid var(--border);
+    border-radius:13px;
+    background:#080d17;
+    color:white;
+    padding:12px;
+    outline:none;
+}
+
+/* =========================================================
+   SHORT VIDEOS
+========================================================= */
+
+.video-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+}
+
+.video-card{
+    height:430px;
+    border-radius:22px;
+    overflow:hidden;
+    position:relative;
+    background:#080b12;
+    cursor:pointer;
+}
+
+.video-card video,
+.video-card img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.video-overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+        transparent 45%,
+        rgba(0,0,0,.85)
+    );
+    padding:15px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+}
+
+.video-overlay strong{
+    font-size:14px;
+}
+
+.video-overlay p{
+    font-size:12px;
+    color:#d6dce7;
+    margin-top:5px;
+}
+
+.video-actions{
+    position:absolute;
+    right:10px;
+    bottom:20px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.video-action{
+    width:40px;
+    height:40px;
+    border:0;
+    border-radius:50%;
+    background:rgba(0,0,0,.55);
+    color:white;
+    cursor:pointer;
+}
+
+/* =========================================================
+   CREATE
+========================================================= */
+
+.create-box{
+    max-width:760px;
+    margin:auto;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:25px;
+    padding:20px;
+}
+
+.create-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+}
+
+.create-tab{
+    flex:1;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--muted);
+    padding:12px;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+.create-tab.active{
+    background:rgba(212,155,40,.12);
+    color:var(--accent2);
+    border-color:rgba(212,155,40,.3);
+}
+
+textarea{
+    width:100%;
+    min-height:170px;
+    resize:vertical;
+    background:#080d17;
+    color:white;
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:16px;
+    outline:none;
+    font-family:inherit;
+}
+
+.upload-area{
+    border:1px dashed rgba(255,255,255,.2);
+    border-radius:18px;
+    padding:30px;
+    text-align:center;
+    margin:15px 0;
+    cursor:pointer;
+    color:var(--muted);
+}
+
+.upload-area:hover{
+    border-color:var(--accent);
+}
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.profile-cover{
+    height:210px;
+    border-radius:25px;
+    background:
+        radial-gradient(circle at 20% 20%,rgba(212,155,40,.35),transparent 35%),
+        linear-gradient(135deg,#151f30,#080c14);
+    position:relative;
+}
+
+.profile-main{
+    padding:0 25px;
+}
+
+.profile-avatar{
+    width:105px;
+    height:105px;
+    border-radius:50%;
+    border:5px solid var(--bg);
+    margin-top:-50px;
+    position:relative;
+    object-fit:cover;
+}
+
+.profile-info{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.profile-info h1{
+    font-size:25px;
+    margin-top:7px;
+}
+
+.profile-info p{
+    color:var(--muted);
+    margin-top:5px;
+}
+
+.stats{
+    display:flex;
+    gap:25px;
+    margin-top:18px;
+}
+
+.stat strong{
+    display:block;
+    font-size:18px;
+}
+
+.stat span{
+    color:var(--muted);
+    font-size:11px;
+}
+
+/* =========================================================
+   COMMUNITIES
+========================================================= */
+
+.community-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+}
+
+.community{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:18px;
+}
+
+.community-icon{
+    width:50px;
+    height:50px;
+    border-radius:15px;
+    background:rgba(212,155,40,.12);
+    display:grid;
+    place-items:center;
+    font-size:24px;
+    margin-bottom:14px;
+}
+
+.community p{
+    color:var(--muted);
+    font-size:12px;
+    margin:7px 0 15px;
+}
+
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
+
+.notification{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:15px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:17px;
+    margin-bottom:10px;
+}
+
+.notification-text{
+    flex:1;
+}
+
+.notification-text strong{
+    font-size:13px;
+}
+
+.notification-text p{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:4px;
+}
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+.settings{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    gap:18px;
+}
+
+.settings-menu{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:10px;
+}
+
+.setting-menu-btn{
+    width:100%;
+    background:transparent;
+    color:var(--muted);
+    border:0;
+    padding:12px;
+    text-align:left;
+    border-radius:11px;
+    cursor:pointer;
+}
+
+.setting-menu-btn:hover,
+.setting-menu-btn.active{
+    background:rgba(255,255,255,.05);
+    color:white;
+}
+
+.settings-panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:22px;
+}
+
+.setting-row{
+    padding:16px 0;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.setting-row:last-child{
+    border-bottom:0;
+}
+
+.setting-row p{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:4px;
+}
+
+/* =========================================================
+   SWITCH
+========================================================= */
+
+.switch{
+    width:45px;
+    height:25px;
+    background:#263043;
+    border-radius:20px;
+    position:relative;
+    cursor:pointer;
+}
+
+.switch::after{
+    content:"";
+    position:absolute;
+    width:19px;
+    height:19px;
+    background:white;
+    border-radius:50%;
+    top:3px;
+    left:3px;
+    transition:.2s;
+}
+
+.switch.on{
+    background:var(--accent);
+}
+
+.switch.on::after{
+    left:23px;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.72);
+    backdrop-filter:blur(10px);
+    display:none;
+    place-items:center;
+    z-index:100;
+    padding:20px;
+}
+
+.modal.show{
+    display:grid;
+}
+
+.modal-box{
+    width:min(500px,100%);
+    background:#0d1422;
+    border:1px solid var(--border);
+    border-radius:25px;
+    padding:22px;
+    box-shadow:var(--shadow);
+}
+
+.modal-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.close{
+    border:0;
+    background:transparent;
+    color:white;
+    font-size:22px;
+    cursor:pointer;
+}
+
+/* =========================================================
+   CALL MODAL
+========================================================= */
+
+.call-screen{
+    text-align:center;
+    padding:30px;
+}
+
+.call-avatar{
+    width:115px;
+    height:115px;
+    border-radius:50%;
+    margin:20px auto;
+    object-fit:cover;
+    border:4px solid rgba(212,155,40,.4);
+}
+
+.call-status{
+    color:var(--muted);
+}
+
+.call-controls{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin-top:30px;
+}
+
+.call-btn{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:#172131;
+    color:white;
+    cursor:pointer;
+}
+
+.call-btn.end{
+    background:var(--danger);
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.toast{
+    position:fixed;
+    bottom:25px;
+    left:50%;
+    transform:translate(-50%,20px);
+    background:#151e2d;
+    border:1px solid var(--border);
+    color:white;
+    padding:12px 18px;
+    border-radius:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:.3s;
+    z-index:200;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+.mobile-nav{
+    display:none;
+}
+
+@media(max-width:950px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .content{
+        padding:15px;
+        padding-bottom:80px;
+    }
+
+    .topbar{
+        padding:0 15px;
+    }
+
+    .feed{
+        grid-template-columns:1fr;
+    }
+
+    .trending-card{
+        display:none;
+    }
+
+    .video-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .community-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .settings{
+        grid-template-columns:1fr;
+    }
+
+    .mobile-nav{
+        position:fixed;
+        bottom:0;
+        left:0;
+        right:0;
+        height:65px;
+        background:rgba(5,7,13,.94);
+        backdrop-filter:blur(20px);
+        border-top:1px solid var(--border);
+        display:flex;
+        justify-content:space-around;
+        align-items:center;
+        z-index:50;
+    }
+
+    .mobile-nav button{
+        background:transparent;
+        border:0;
+        color:var(--muted);
+        font-size:20px;
+        cursor:pointer;
+    }
+
+    .mobile-nav button.active{
+        color:var(--accent2);
+    }
+}
+
+@media(max-width:650px){
+
+    .hero h1{
+        font-size:25px;
+    }
+
+    .video-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .video-card{
+        height:310px;
+    }
+
+    .messages-layout{
+        grid-template-columns:1fr;
+    }
+
+    .conversations{
+        display:none;
+    }
+
+    .community-grid{
+        grid-template-columns:1fr;
+    }
+
+    .profile-info{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+}
+</style>
 </head>
+
 <body>
 
-    <main id="app-container">
-        
-        <!-- ÉCRAN DE CONNEXION / INSCRIPTION -->
-        <section id="screen-auth" class="screen">
-            <div class="brand-header">
-                <img src="logo.jpg" alt="Logo" class="login-logo">
-                <h1>KongoVibe</h1>
-            </div>
-            <div class="welcome-text">
-                <h2 id="auth-title">Bienvenue</h2>
-                <p id="auth-subtitle">Connectez-vous ou créez un compte</p>
-            </div>
+<div class="app">
 
-            <div class="form-group" id="name-field" style="display: none;">
-                <label>Nom complet</label>
-                <div class="input-box">
-                    <input type="text" id="signup-name" placeholder="Ex: Tresor Mbuyi">
-                </div>
-            </div>
+<!-- ======================================================
+     SIDEBAR
+====================================================== -->
 
-            <div class="form-group">
-                <label>Numéro de téléphone ou Email</label>
-                <div class="input-box">
-                    <input type="text" id="auth-input" placeholder="votre@email.com ou +243...">
-                </div>
-            </div>
+<aside class="sidebar">
 
-            <div class="form-group">
-                <label>Mot de passe</label>
-                <div class="input-box">
-                    <input type="password" id="auth-password" placeholder="••••••••">
-                </div>
-            </div>
+    <div class="logo">
+        <div class="logo-symbol">K</div>
+        <div class="logo-text">Kongo<span>Vibe</span></div>
+    </div>
 
-            <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Se connecter</button>
+    <nav class="nav">
 
-            <div class="signup-prompt">
-                <span id="toggle-prompt-text">Pas encore de compte ?</span> 
-                <a class="highlight-link" onclick="toggleAuthMode()" id="toggle-auth-link">S'inscrire</a>
-            </div>
-        </section>
+        <button class="nav-btn active" data-page="home">
+            <span class="nav-icon">⌂</span>
+            Accueil
+        </button>
 
-        <!-- APPLICATION PRINCIPALE -->
-        <div id="main-app" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
-            
-            <!-- ONGLET MESSAGES -->
-            <section id="tab-messages" class="tab-content active">
-                <div class="tab-header">
-                    <h2>Messages</h2>
-                    <button class="icon-circle-btn" onclick="openInviteModal()" title="Inviter un ami">➕</button>
-                </div>
+        <button class="nav-btn" data-page="videos">
+            <span class="nav-icon">▶</span>
+            Vibe
+        </button>
 
-                <div class="search-bar-container">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="search-contact" placeholder="Rechercher une conversation..." onkeyup="filterChats()">
-                </div>
+        <button class="nav-btn" data-page="messages">
+            <span class="nav-icon">◌</span>
+            Messages
+        </button>
 
-                <div class="chat-list" id="chat-list-container">
-                    <!-- Les conversations dynamiques s'insèrent ici -->
-                </div>
-            </section>
+        <button class="nav-btn" data-page="create">
+            <span class="nav-icon">＋</span>
+            Créer
+        </button>
 
-            <!-- ONGLET REELS -->
-            <section id="tab-reels" class="tab-content">
-                <div class="reels-header">
-                    <h3>Reels</h3>
-                    <div class="reels-header-icons">
-                        <span>🔍</span>
-                        <span>📷</span>
-                    </div>
-                </div>
+        <button class="nav-btn" data-page="communities">
+            <span class="nav-icon">◎</span>
+            Communautés
+        </button>
 
-                <div class="reel-view">
-                    <div class="reel-overlay-content">
-                        <div class="reel-author-box">
-                            <img src="logo.jpg" class="avatar-mini" alt="Avatar">
-                            <span class="reel-username">@tresor_drc 🛡️</span>
-                        </div>
-                        <p class="reel-caption">Belle soirée à Kinshasa 🇨🇩 #KongoVibe #RDC #Kinshasa</p>
-                        <div class="reel-audio">♪ Ambiance Afro • INNOSS'B</div>
-                    </div>
+        <button class="nav-btn" data-page="notifications">
+            <span class="nav-icon">♢</span>
+            Notifications
+        </button>
 
-                    <div class="reel-sidebar-actions">
-                        <button class="reel-act-btn">❤️ <span>12,4k</span></button>
-                        <button class="reel-act-btn">💬 <span>286</span></button>
-                        <button class="reel-act-btn">↗️ <span>Share</span></button>
-                        <button class="reel-act-btn">🔖</button>
-                    </div>
-                </div>
-            </section>
-        </div>
+        <button class="nav-btn" data-page="profile">
+            <span class="nav-icon">◉</span>
+            Profil
+        </button>
 
-        <!-- FENÊTRE DE CHAT INDividuel (Style WhatsApp) -->
-        <div id="chat-room">
-            <div class="chat-room-header">
-                <button class="back-btn" onclick="closeChat()">⬅️</button>
-                <div class="avatar-badge" id="active-chat-avatar" style="width: 36px; height: 36px; font-size: 0.8rem;">AM</div>
-                <h3 id="active-chat-name" style="font-size: 1rem; flex: 1;">Nom du contact</h3>
-            </div>
-            <div class="chat-messages-box" id="chat-messages-box">
-                <!-- Messages injectés dynamiquement -->
-            </div>
-            <div class="chat-input-area">
-                <input type="text" id="message-input" placeholder="Écrire un message..." onkeypress="handleKeyPress(event)">
-                <button class="send-btn" onclick="sendMessage()">➤</button>
-            </div>
-        </div>
+        <button class="nav-btn" data-page="settings">
+            <span class="nav-icon">⚙</span>
+            Paramètres
+        </button>
 
-        <!-- MODAL : INVITATION / AJOUT DE CONTACT -->
-        <div class="modal" id="invite-modal">
-            <div class="modal-content">
-                <h3>Inviter un ami / Ajouter un contact</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted);">Entre le numéro ou le nom de ton ami pour lancer une discussion.</p>
-                <div class="form-group" style="margin-bottom:0;">
-                    <input type="text" id="new-contact-name" placeholder="Nom de l'ami (ex: Christian)" style="width:100%; background:var(--bg-input); border:1px solid var(--border-color); padding:12px; border-radius:10px; color:white; outline:none;">
-                </div>
-                <div class="modal-buttons">
-                    <button class="btn-secondary" onclick="closeInviteModal()">Annuler</button>
-                    <button class="btn-accent" onclick="addNewContact()">Démarrer le chat</button>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- BARRE DE NAVIGATION -->
-    <nav class="bottom-nav hidden" id="bottom-nav">
-        <button class="nav-btn active" id="nav-msg-btn" onclick="switchTab('messages')">💬</button>
-        <button class="nav-btn" onclick="alert('Profil utilisateur')">👤</button>
-        <button class="nav-btn btn-plus" onclick="openInviteModal()"><span>+</span></button>
-        <button class="nav-btn" id="nav-reel-btn" onclick="switchTab('reels')">🎬</button>
-        <button class="nav-btn" onclick="alert('Paramètres')">⚙️</button>
     </nav>
 
-    <script>
-        // Gestion de l'état de l'application & Stockage local par défaut
-        let isSignup = false;
-        let currentActiveChat = null;
+    <div class="sidebar-bottom">
 
-        // Base de données locale de conversations (Initialisée avec tes exemples)
-        let conversations = JSON.parse(localStorage.getItem('KV_CONVS')) || [
-            { id: 1, name: "Amani Mbuyi", time: "10:42", lastMsg: "On se voit demain au marché? 👍", unread: true, color: "", messages: ["Salut ! On se voit demain au marché? 👍"] },
-            { id: 2, name: "Junior Kinshasa", time: "10:42", lastMsg: "Le lien est ici 👆 J'ai envoyé la vidéo", unread: false, color: "red", messages: ["Le lien est ici 👆 J'ai envoyé la vidéo"] },
-            { id: 3, name: "Maman B.", time: "Hier", lastMsg: "N'oublie pas d'acheter le fufu 🙏", unread: false, count: 2, color: "purple", messages: ["N'oublie pas d'acheter le fufu 🙏"] },
-            { id: 4, name: "Groupe — Lubumbashi Crew", time: "12:30", lastMsg: "Trésor: Qui vient pour la soirée?", unread: false, color: "green", messages: ["Trésor: Qui vient pour la soirée?"] }
-        ];
+        <div class="profile-mini">
+            <img
+                class="avatar"
+                src="https://i.pravatar.cc/150?img=12"
+                alt="Profil"
+            >
 
-        function toggleAuthMode() {
-            isSignup = !isSignup;
-            document.getElementById('auth-title').innerText = isSignup ? "Créer un compte" : "Bienvenue";
-            document.getElementById('auth-subtitle').innerText = isSignup ? "Rejoins KongoVibe dès aujourd'hui" : "Connectez-vous ou créez un compte";
-            document.getElementById('auth-btn').innerText = isSignup ? "S'inscrire" : "Se connecter";
-            document.getElementById('name-field').style.display = isSignup ? "block" : "none";
-            document.getElementById('toggle-prompt-text').innerText = isSignup ? "Déjà un compte ?" : "Pas encore de compte ?";
-            document.getElementById('toggle-auth-link').innerText = isSignup ? "Se connecter" : "S'inscrire";
-        }
+            <div>
+                <strong>Manassé</strong>
+                <small>@manasse</small>
+            </div>
+        </div>
 
-        function handleAuth() {
-            const inputVal = document.getElementById('auth-input').value;
-            const passVal = document.getElementById('auth-password').value;
-            if(!inputVal || !passVal) {
-                alert("Veuillez remplir tous les champs !");
-                return;
-            }
-            // Transition vers l'application principale
-            document.getElementById('screen-auth').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('bottom-nav').classList.remove('hidden');
-            renderChats();
-        }
+    </div>
 
-        function renderChats() {
-            const container = document.getElementById('chat-list-container');
-            container.innerHTML = "";
-            
-            conversations.forEach(conv => {
-                let initials = conv.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-                let unreadHtml = conv.unread ? `<span class="unread-dot"></span>` : (conv.count ? `<span class="badge-number">${conv.count}</span>` : '');
-                
-                let html = `
-                    <div class="chat-item" onclick="openChat(${conv.id})">
-                        <div class="avatar-badge ${conv.color}">${initials}</div>
-                        <div class="chat-info">
-                            <div class="chat-name-row">
-                                <h4>${conv.name}</h4>
-                                <span class="time">${conv.time}</span>
-                            </div>
-                            <div class="chat-msg-row">
-                                <p>${conv.lastMsg}</p>
-                                ${unreadHtml}
-                            </div>
-                        </div>
+</aside>
+
+
+<!-- ======================================================
+     MAIN
+====================================================== -->
+
+<main class="main">
+
+<header class="topbar">
+
+    <div class="page-title" id="pageTitle">
+        Accueil
+    </div>
+
+    <div class="top-actions">
+
+        <button class="icon-btn" onclick="openSearch()">
+            ⌕
+        </button>
+
+        <button
+            class="icon-btn"
+            onclick="showPage('notifications')"
+        >
+            ♢
+        </button>
+
+        <button
+            class="icon-btn"
+            onclick="showToast('Synchronisation terminée')"
+        >
+            ↻
+        </button>
+
+    </div>
+
+</header>
+
+
+<div class="content">
+
+<!-- ======================================================
+     HOME
+====================================================== -->
+
+<section class="page active" id="home">
+
+    <div class="hero">
+
+        <h1>
+            Bienvenue dans une nouvelle façon de communiquer.
+        </h1>
+
+        <p>
+            Discute, appelle, découvre des vidéos, partage tes
+            moments et rejoins des communautés sans quitter
+            ton espace social.
+        </p>
+
+        <div class="hero-buttons">
+
+            <button
+                class="primary"
+                onclick="showPage('create')"
+            >
+                ＋ Créer
+            </button>
+
+            <button
+                class="secondary"
+                onclick="showPage('videos')"
+            >
+                ▶ Découvrir
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="section-title">
+        <h2>Statuts</h2>
+        <span>Voir tout</span>
+    </div>
+
+    <div class="stories">
+
+        <div class="story" onclick="openStory('Manassé')">
+            <div class="story-ring">
+                <img
+                    class="story-inner"
+                    src="https://i.pravatar.cc/150?img=12"
+                >
+            </div>
+            <div class="story-name">Ton statut</div>
+        </div>
+
+        <div class="story" onclick="openStory('Sarah')">
+            <div class="story-ring">
+                <img
+                    class="story-inner"
+                    src="https://i.pravatar.cc/150?img=47"
+                >
+            </div>
+            <div class="story-name">Sarah</div>
+        </div>
+
+        <div class="story" onclick="openStory('Kevin')">
+            <div class="story-ring">
+                <img
+                    class="story-inner"
+                    src="https://i.pravatar.cc/150?img=11"
+                >
+            </div>
+            <div class="story-name">Kevin</div>
+        </div>
+
+        <div class="story" onclick="openStory('Grace')">
+            <div class="story-ring">
+                <img
+                    class="story-inner"
+                    src="https://i.pravatar.cc/150?img=32"
+                >
+            </div>
+            <div class="story-name">Grace</div>
+        </div>
+
+        <div class="story" onclick="openStory('David')">
+            <div class="story-ring">
+                <img
+                    class="story-inner"
+                    src="https://i.pravatar.cc/150?img=13"
+                >
+            </div>
+            <div class="story-name">David</div>
+        </div>
+
+    </div>
+
+
+    <div class="section-title">
+        <h2>Pour toi</h2>
+        <span>Personnalisé</span>
+    </div>
+
+
+    <div class="feed">
+
+        <div>
+
+            <article class="post">
+
+                <div class="post-head">
+
+                    <img
+                        class="avatar"
+                        src="https://i.pravatar.cc/150?img=11"
+                    >
+
+                    <div class="post-head-info">
+                        <strong>Kevin Tech</strong>
+                        <small>@kevintech · 12 min</small>
                     </div>
-                `;
-                container.innerHTML += html;
-            });
-            localStorage.setItem('KV_CONVS', JSON.stringify(conversations));
-        }
 
-        function switchTab(tabName) {
-            const msgTab = document.getElementById('tab-messages');
-            const reelsTab = document.getElementById('tab-reels');
-            const navMsg = document.getElementById('nav-msg-btn');
-            const navReel = document.getElementById('nav-reel-btn');
+                    <button class="icon-btn">•••</button>
 
-            if (tabName === 'messages') {
-                msgTab.classList.add('active');
-                reelsTab.classList.remove('active');
-                navMsg.classList.add('active');
-                navReel.classList.remove('active');
-            } else if (tabName === 'reels') {
-                reelsTab.classList.add('active');
-                msgTab.classList.remove('active');
-                navReel.classList.add('active');
-                navMsg.classList.remove('active');
+                </div>
+
+                <p class="post-text">
+                    Construire quelque chose de nouveau commence
+                    toujours par une idée. 🚀
+                </p>
+
+                <img
+                    class="post-media"
+                    src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80"
+                >
+
+                <div class="post-actions">
+
+                    <button
+                        class="post-action"
+                        onclick="toggleLike(this)"
+                    >
+                        ♡ <span>124</span>
+                    </button>
+
+                    <button
+                        class="post-action"
+                        onclick="showToast('Commentaires ouverts')"
+                    >
+                        ◌ 38
+                    </button>
+
+                    <button
+                        class="post-action"
+                        onclick="showToast('Publication partagée')"
+                    >
+                        ↗ 12
+                    </button>
+
+                    <button
+                        class="post-action"
+                        onclick="showToast('Publication enregistrée')"
+                    >
+                        ♧
+                    </button>
+
+                </div>
+
+            </article>
+
+
+            <article class="post">
+
+                <div class="post-head">
+
+                    <img
+                        class="avatar"
+                        src="https://i.pravatar.cc/150?img=32"
+                    >
+
+                    <div class="post-head-info">
+                        <strong>Grace M.</strong>
+                        <small>@gracem · 34 min</small>
+                    </div>
+
+                </div>
+
+                <p class="post-text">
+                    La créativité n'a pas besoin de permission.
+                    ✨
+                </p>
+
+                <div class="post-actions">
+
+                    <button
+                        class="post-action"
+                        onclick="toggleLike(this)"
+                    >
+                        ♡ <span>86</span>
+                    </button>
+
+                    <button class="post-action">
+                        ◌ 19
+                    </button>
+
+                    <button class="post-action">
+                        ↗ 8
+                    </button>
+
+                </div>
+
+            </article>
+
+        </div>
+
+
+        <aside class="trending-card">
+
+            <div class="section-title">
+                <h2>Tendances</h2>
+            </div>
+
+            <div class="trend">
+                <small>#Technologie</small>
+                <strong>2,4K publications</strong>
+            </div>
+
+            <div class="trend">
+                <small>#Kinshasa</small>
+                <strong>18K publications</strong>
+            </div>
+
+            <div class="trend">
+                <small>#Robotique</small>
+                <strong>8,7K publications</strong>
+            </div>
+
+            <div class="trend">
+                <small>#KongoVibe</small>
+                <strong>32K publications</strong>
+            </div>
+
+        </aside>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     VIDEOS
+====================================================== -->
+
+<section class="page" id="videos">
+
+    <div class="section-title">
+
+        <div>
+            <h2>Vibe</h2>
+            <span>Découvre ce qui fait vibrer la communauté</span>
+        </div>
+
+        <button
+            class="primary"
+            onclick="showPage('create')"
+        >
+            ＋ Créer une vidéo
+        </button>
+
+    </div>
+
+
+    <div class="video-grid">
+
+        <div class="video-card">
+
+            <img
+                src="https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=800&q=80"
+            >
+
+            <div class="video-overlay">
+                <strong>@creativeworld</strong>
+                <p>
+                    Quand la créativité rencontre la technologie.
+                </p>
+            </div>
+
+            <div class="video-actions">
+
+                <button
+                    class="video-action"
+                    onclick="videoLike(this)"
+                >
+                    ♡
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Commentaires')"
+                >
+                    ◌
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Vidéo partagée')"
+                >
+                    ↗
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="video-card">
+
+            <img
+                src="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80"
+            >
+
+            <div class="video-overlay">
+                <strong>@cinema</strong>
+                <p>
+                    Une autre vision du monde.
+                </p>
+            </div>
+
+            <div class="video-actions">
+
+                <button
+                    class="video-action"
+                    onclick="videoLike(this)"
+                >
+                    ♡
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Commentaires')"
+                >
+                    ◌
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Vidéo partagée')"
+                >
+                    ↗
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="video-card">
+
+            <img
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80"
+            >
+
+            <div class="video-overlay">
+                <strong>@futurelab</strong>
+                <p>
+                    Le futur se construit aujourd'hui.
+                </p>
+            </div>
+
+            <div class="video-actions">
+
+                <button
+                    class="video-action"
+                    onclick="videoLike(this)"
+                >
+                    ♡
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Commentaires')"
+                >
+                    ◌
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Vidéo partagée')"
+                >
+                    ↗
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="video-card">
+
+            <img
+                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=800&q=80"
+            >
+
+            <div class="video-overlay">
+                <strong>@musiclife</strong>
+                <p>
+                    Le son est une autre manière de communiquer.
+                </p>
+            </div>
+
+            <div class="video-actions">
+
+                <button
+                    class="video-action"
+                    onclick="videoLike(this)"
+                >
+                    ♡
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Commentaires')"
+                >
+                    ◌
+                </button>
+
+                <button
+                    class="video-action"
+                    onclick="showToast('Vidéo partagée')"
+                >
+                    ↗
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     MESSAGES
+====================================================== -->
+
+<section class="page" id="messages">
+
+    <div class="messages-layout">
+
+        <aside class="conversations">
+
+            <input
+                class="search"
+                id="conversationSearch"
+                placeholder="Rechercher..."
+                oninput="filterConversations()"
+            >
+
+            <div
+                class="conversation active"
+                data-name="Sarah"
+                onclick="selectConversation('Sarah')"
+            >
+
+                <img
+                    class="avatar"
+                    src="https://i.pravatar.cc/150?img=47"
+                >
+
+                <div class="conversation-info">
+                    <strong>Sarah</strong>
+                    <p>Tu as vu cette vidéo ?</p>
+                </div>
+
+            </div>
+
+
+            <div
+                class="conversation"
+                data-name="Kevin"
+                onclick="selectConversation('Kevin')"
+            >
+
+                <img
+                    class="avatar"
+                    src="https://i.pravatar.cc/150?img=11"
+                >
+
+                <div class="conversation-info">
+                    <strong>Kevin</strong>
+                    <p>On parle du projet demain.</p>
+                </div>
+
+            </div>
+
+
+            <div
+                class="conversation"
+                data-name="Grace"
+                onclick="selectConversation('Grace')"
+            >
+
+                <img
+                    class="avatar"
+                    src="https://i.pravatar.cc/150?img=32"
+                >
+
+                <div class="conversation-info">
+                    <strong>Grace</strong>
+                    <p>Merci beaucoup !</p>
+                </div>
+
+            </div>
+
+
+            <div
+                class="conversation"
+                data-name="David"
+                onclick="selectConversation('David')"
+            >
+
+                <img
+                    class="avatar"
+                    src="https://i.pravatar.cc/150?img=13"
+                >
+
+                <div class="conversation-info">
+                    <strong>David</strong>
+                    <p>🔥🔥🔥</p>
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <div class="chat">
+
+            <header class="chat-header">
+
+                <img
+                    class="avatar"
+                    id="chatAvatar"
+                    src="https://i.pravatar.cc/150?img=47"
+                >
+
+                <div class="chat-header-info">
+
+                    <strong id="chatName">
+                        Sarah
+                    </strong>
+
+                    <small>
+                        En ligne
+                    </small>
+
+                </div>
+
+                <div class="chat-actions">
+
+                    <button
+                        class="icon-btn"
+                        onclick="startCall('audio')"
+                    >
+                        ☎
+                    </button>
+
+                    <button
+                        class="icon-btn"
+                        onclick="startCall('video')"
+                    >
+                        ▣
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <div class="chat-body" id="chatBody">
+
+                <div class="message other">
+
+                    Salut ! 👋
+
+                    <div class="message-time">
+                        17:23
+                    </div>
+
+                </div>
+
+                <div class="message me">
+
+                    Salut Sarah, ça va ?
+
+                    <div class="message-time">
+                        17:24 ✓✓
+                    </div>
+
+                </div>
+
+                <div class="message other">
+
+                    Très bien. Tu as vu la nouvelle vidéo ?
+
+                    <div class="message-time">
+                        17:25
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <form
+                class="chat-input"
+                onsubmit="sendMessage(event)"
+            >
+
+                <button
+                    type="button"
+                    class="icon-btn"
+                    onclick="showToast('Pièce jointe')"
+                >
+                    ＋
+                </button>
+
+                <input
+                    id="messageInput"
+                    placeholder="Écrire un message..."
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    class="icon-btn"
+                    onclick="showToast('Message vocal')"
+                >
+                    🎙
+                </button>
+
+                <button
+                    class="primary"
+                    type="submit"
+                >
+                    ➤
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     CREATE
+====================================================== -->
+
+<section class="page" id="create">
+
+    <div class="create-box">
+
+        <div class="section-title">
+
+            <div>
+                <h2>Créer</h2>
+                <span>Partage quelque chose avec ta communauté</span>
+            </div>
+
+        </div>
+
+
+        <div class="create-tabs">
+
+            <button
+                class="create-tab active"
+                onclick="switchCreate('publication',this)"
+            >
+                Publication
+            </button>
+
+            <button
+                class="create-tab"
+                onclick="switchCreate('video',this)"
+            >
+                Vidéo
+            </button>
+
+            <button
+                class="create-tab"
+                onclick="switchCreate('status',this)"
+            >
+                Statut
+            </button>
+
+        </div>
+
+
+        <div id="createContent">
+
+            <textarea
+                id="postText"
+                placeholder="Qu'as-tu envie de partager ?"
+            ></textarea>
+
+            <div
+                class="upload-area"
+                onclick="fakeUpload()"
+            >
+                ＋<br>
+                Ajouter une photo, une vidéo ou un fichier
+            </div>
+
+            <button
+                class="primary"
+                onclick="publishContent()"
+            >
+                Publier
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     COMMUNITIES
+====================================================== -->
+
+<section class="page" id="communities">
+
+    <div class="section-title">
+
+        <div>
+            <h2>Communautés</h2>
+            <span>Découvre des espaces qui t'intéressent</span>
+        </div>
+
+        <button
+            class="primary"
+            onclick="showToast('Création de communauté')"
+        >
+            ＋ Nouvelle communauté
+        </button>
+
+    </div>
+
+
+    <div class="community-grid">
+
+        <div class="community">
+
+            <div class="community-icon">
+                🤖
+            </div>
+
+            <h3>Robotique RDC</h3>
+
+            <p>
+                Passionnés de robotique, électronique et
+                automatisation.
+            </p>
+
+            <button
+                class="secondary"
+                onclick="joinCommunity(this)"
+            >
+                Rejoindre
+            </button>
+
+        </div>
+
+
+        <div class="community">
+
+            <div class="community-icon">
+                💻
+            </div>
+
+            <h3>Développeurs</h3>
+
+            <p>
+                Programmation, IA, web et nouvelles technologies.
+            </p>
+
+            <button
+                class="secondary"
+                onclick="joinCommunity(this)"
+            >
+                Rejoindre
+            </button>
+
+        </div>
+
+
+        <div class="community">
+
+            <div class="community-icon">
+                🎵
+            </div>
+
+            <h3>Musique</h3>
+
+            <p>
+                Artistes, producteurs et passionnés de musique.
+            </p>
+
+            <button
+                class="secondary"
+                onclick="joinCommunity(this)"
+            >
+                Rejoindre
+            </button>
+
+        </div>
+
+
+        <div class="community">
+
+            <div class="community-icon">
+                🎓
+            </div>
+
+            <h3>Étudiants</h3>
+
+            <p>
+                Discussions, entraide, études et projets.
+            </p>
+
+            <button
+                class="secondary"
+                onclick="joinCommunity(this)"
+            >
+                Rejoindre
+            </button>
+
+        </div>
+
+
+        <div class="community">
+
+            <div class="community-icon">
+                ⚽
+            </div>
+
+            <h3>Sport</h3>
+
+            <p>
+                Actualités, discussions et passion sportive.
+            </p>
+
+            <button
+                class="secondary"
+                onclick="joinCommunity(this)"
+            >
+                Rejoindre
+            </button>
+
+        </div>
+
+
+        <div class="community">
+
+            <div class="community-icon">
+                🌍
+            </div>
+
+            <h3>Afrique Tech</h3>
+
+            <p>
+                Innovation et technologie sur le continent.
+            </p>
+
+            <button
+                class="secondary"
+                onclick="joinCommunity(this)"
+            >
+                Rejoindre
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     NOTIFICATIONS
+====================================================== -->
+
+<section class="page" id="notifications">
+
+    <div class="section-title">
+        <h2>Notifications</h2>
+        <span>Activité récente</span>
+    </div>
+
+
+    <div class="notification">
+
+        <img
+            class="avatar"
+            src="https://i.pravatar.cc/150?img=47"
+        >
+
+        <div class="notification-text">
+
+            <strong>Sarah a aimé ta publication.</strong>
+
+            <p>
+                Il y a 2 minutes
+            </p>
+
+        </div>
+
+        <button class="icon-btn">
+            ♡
+        </button>
+
+    </div>
+
+
+    <div class="notification">
+
+        <img
+            class="avatar"
+            src="https://i.pravatar.cc/150?img=11"
+        >
+
+        <div class="notification-text">
+
+            <strong>Kevin a commencé à te suivre.</strong>
+
+            <p>
+                Il y a 12 minutes
+            </p>
+
+        </div>
+
+        <button class="primary">
+            Suivre
+        </button>
+
+    </div>
+
+
+    <div class="notification">
+
+        <div class="avatar" style="display:grid;place-items:center;">
+            🔥
+        </div>
+
+        <div class="notification-text">
+
+            <strong>
+                Ta vidéo commence à être tendance.
+            </strong>
+
+            <p>
+                2 400 vues aujourd'hui
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     PROFILE
+====================================================== -->
+
+<section class="page" id="profile">
+
+    <div class="profile-cover"></div>
+
+    <div class="profile-main">
+
+        <img
+            class="profile-avatar"
+            src="https://i.pravatar.cc/300?img=12"
+        >
+
+        <div class="profile-info">
+
+            <div>
+
+                <h1>
+                    Manassé
+                    <span style="color:var(--accent2);font-size:16px;">
+                        ✓
+                    </span>
+                </h1>
+
+                <p>
+                    @manasse · Créateur · Technologie
+                </p>
+
+                <div class="stats">
+
+                    <div class="stat">
+                        <strong>128</strong>
+                        <span>Publications</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong>4.8K</strong>
+                        <span>Abonnés</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong>312</strong>
+                        <span>Abonnements</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button
+                class="primary"
+                onclick="showToast('Modification du profil')"
+            >
+                Modifier le profil
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     SETTINGS
+====================================================== -->
+
+<section class="page" id="settings">
+
+    <div class="settings">
+
+        <div class="settings-menu">
+
+            <button class="setting-menu-btn active">
+                Compte
+            </button>
+
+            <button class="setting-menu-btn">
+                Confidentialité
+            </button>
+
+            <button class="setting-menu-btn">
+                Sécurité
+            </button>
+
+            <button class="setting-menu-btn">
+                Notifications
+            </button>
+
+            <button class="setting-menu-btn">
+                Données
+            </button>
+
+            <button class="setting-menu-btn">
+                Apparence
+            </button>
+
+        </div>
+
+
+        <div class="settings-panel">
+
+            <h2>Paramètres</h2>
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Compte privé</strong>
+                    <p>
+                        Seuls les utilisateurs acceptés peuvent
+                        voir tes contenus.
+                    </p>
+                </div>
+
+                <div
+                    class="switch"
+                    onclick="toggleSwitch(this)"
+                ></div>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Confirmation de lecture</strong>
+                    <p>
+                        Afficher lorsque tu as lu un message.
+                    </p>
+                </div>
+
+                <div
+                    class="switch on"
+                    onclick="toggleSwitch(this)"
+                ></div>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Présence en ligne</strong>
+                    <p>
+                        Autoriser les autres à voir ton statut.
+                    </p>
+                </div>
+
+                <div
+                    class="switch on"
+                    onclick="toggleSwitch(this)"
+                ></div>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Économie de données</strong>
+                    <p>
+                        Réduire l'utilisation des données mobiles.
+                    </p>
+                </div>
+
+                <div
+                    class="switch"
+                    onclick="toggleSwitch(this)"
+                ></div>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Notifications</strong>
+                    <p>
+                        Autoriser les notifications.
+                    </p>
+                </div>
+
+                <div
+                    class="switch on"
+                    onclick="toggleSwitch(this)"
+                ></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+</div>
+
+
+<!-- ======================================================
+     MOBILE NAV
+====================================================== -->
+
+<nav class="mobile-nav">
+
+    <button
+        class="active"
+        onclick="showPage('home')"
+    >
+        ⌂
+    </button>
+
+    <button onclick="showPage('videos')">
+        ▶
+    </button>
+
+    <button onclick="showPage('create')">
+        ＋
+    </button>
+
+    <button onclick="showPage('messages')">
+        ◌
+    </button>
+
+    <button onclick="showPage('profile')">
+        ◉
+    </button>
+
+</nav>
+
+</main>
+
+</div>
+
+
+<!-- ======================================================
+     SEARCH MODAL
+====================================================== -->
+
+<div class="modal" id="searchModal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+
+            <h2>Recherche</h2>
+
+            <button
+                class="close"
+                onclick="closeModal('searchModal')"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <input
+            class="search"
+            style="margin:0;width:100%;"
+            id="globalSearch"
+            placeholder="Rechercher une personne, vidéo, hashtag..."
+            oninput="globalSearch()"
+        >
+
+        <div
+            id="searchResults"
+            style="margin-top:15px;color:var(--muted);"
+        >
+            Commence à rechercher...
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ======================================================
+     CALL MODAL
+====================================================== -->
+
+<div class="modal" id="callModal">
+
+    <div class="modal-box">
+
+        <div class="call-screen">
+
+            <h2 id="callTitle">
+                Appel vidéo
+            </h2>
+
+            <img
+                class="call-avatar"
+                src="https://i.pravatar.cc/300?img=47"
+            >
+
+            <h3 id="callPerson">
+                Sarah
+            </h3>
+
+            <p
+                class="call-status"
+                id="callStatus"
+            >
+                Connexion...
+            </p>
+
+            <div class="call-controls">
+
+                <button
+                    class="call-btn"
+                    onclick="showToast('Micro désactivé')"
+                >
+                    🎙
+                </button>
+
+                <button
+                    class="call-btn"
+                    onclick="showToast('Caméra désactivée')"
+                >
+                    ▣
+                </button>
+
+                <button
+                    class="call-btn end"
+                    onclick="endCall()"
+                >
+                    ☎
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ======================================================
+     STORY MODAL
+====================================================== -->
+
+<div class="modal" id="storyModal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+
+            <h2 id="storyTitle">
+                Statut
+            </h2>
+
+            <button
+                class="close"
+                onclick="closeModal('storyModal')"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div
+            style="
+                height:500px;
+                border-radius:20px;
+                background:
+                linear-gradient(
+                    135deg,
+                    #1a2536,
+                    #05070d
+                );
+                display:grid;
+                place-items:center;
+                text-align:center;
+                padding:30px;
+            "
+        >
+
+            <div>
+
+                <div
+                    style="
+                        font-size:60px;
+                        margin-bottom:20px;
+                    "
+                >
+                    ✨
+                </div>
+
+                <h2>
+                    Une nouvelle vibe.
+                </h2>
+
+                <p
+                    style="
+                        color:var(--muted);
+                        margin-top:10px;
+                    "
+                >
+                    Statut temporaire de la communauté.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+/* =========================================================
+   KONGOVIBE — JAVASCRIPT ENGINE
+========================================================= */
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+const pageNames = {
+    home:"Accueil",
+    videos:"Vibe",
+    messages:"Messages",
+    create:"Créer",
+    communities:"Communautés",
+    notifications:"Notifications",
+    profile:"Profil",
+    settings:"Paramètres"
+};
+
+function showPage(page){
+
+    document.querySelectorAll(".page")
+        .forEach(p => p.classList.remove("active"));
+
+    const target = document.getElementById(page);
+
+    if(target){
+        target.classList.add("active");
+    }
+
+    document.querySelectorAll(".nav-btn")
+        .forEach(btn => {
+
+            btn.classList.toggle(
+                "active",
+                btn.dataset.page === page
+            );
+
+        });
+
+    document.querySelectorAll(".mobile-nav button")
+        .forEach(btn => btn.classList.remove("active"));
+
+    document.getElementById("pageTitle").textContent =
+        pageNames[page] || "KongoVibe";
+
+    window.scrollTo(0,0);
+}
+
+
+/* Navigation desktop */
+
+document.querySelectorAll(".nav-btn")
+.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        showPage(button.dataset.page);
+
+    });
+
+});
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+let toastTimer;
+
+function showToast(message){
+
+    const toast =
+        document.getElementById("toast");
+
+    toast.textContent = message;
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+
+        toast.classList.remove("show");
+
+    },2500);
+}
+
+
+/* =========================================================
+   LIKE PUBLICATION
+========================================================= */
+
+function toggleLike(button){
+
+    button.classList.toggle("liked");
+
+    const span = button.querySelector("span");
+
+    if(!span) return;
+
+    let number =
+        parseInt(span.textContent);
+
+    if(button.classList.contains("liked")){
+
+        number++;
+
+        button.innerHTML =
+            "♥ <span>" + number + "</span>";
+
+    }else{
+
+        number--;
+
+        button.innerHTML =
+            "♡ <span>" + number + "</span>";
+
+    }
+
+}
+
+
+/* =========================================================
+   VIDEO LIKE
+========================================================= */
+
+function videoLike(button){
+
+    button.textContent =
+        button.textContent === "♡"
+        ? "♥"
+        : "♡";
+
+}
+
+
+/* =========================================================
+   STORIES
+========================================================= */
+
+function openStory(name){
+
+    document.getElementById("storyTitle")
+        .textContent = "Statut de " + name;
+
+    document.getElementById("storyModal")
+        .classList.add("show");
+
+}
+
+
+/* =========================================================
+   MODALS
+========================================================= */
+
+function closeModal(id){
+
+    document.getElementById(id)
+        .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function openSearch(){
+
+    document.getElementById("searchModal")
+        .classList.add("show");
+
+    setTimeout(() => {
+
+        document.getElementById("globalSearch")
+            .focus();
+
+    },100);
+
+}
+
+
+function globalSearch(){
+
+    const query =
+        document.getElementById("globalSearch")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const results =
+        document.getElementById("searchResults");
+
+    if(!query){
+
+        results.textContent =
+            "Commence à rechercher...";
+
+        return;
+
+    }
+
+    const database = [
+        "Manassé",
+        "Sarah",
+        "Kevin Tech",
+        "Grace M.",
+        "David",
+        "#Technologie",
+        "#Robotique",
+        "#Kinshasa",
+        "#KongoVibe",
+        "Robotique RDC",
+        "Développeurs",
+        "Musique",
+        "Afrique Tech"
+    ];
+
+    const found =
+        database.filter(item =>
+            item.toLowerCase().includes(query)
+        );
+
+    if(found.length){
+
+        results.innerHTML =
+            found
+            .map(item =>
+                `<div
+                    style="
+                        padding:12px;
+                        border-bottom:1px solid var(--border);
+                        color:white;
+                    "
+                >
+                    🔎 ${item}
+                </div>`
+            )
+            .join("");
+
+    }else{
+
+        results.textContent =
+            "Aucun résultat.";
+
+    }
+
+}
+
+
+/* =========================================================
+   CONVERSATION SEARCH
+========================================================= */
+
+function filterConversations(){
+
+    const query =
+        document.getElementById("conversationSearch")
+        .value
+        .toLowerCase();
+
+    document.querySelectorAll(".conversation")
+        .forEach(item => {
+
+            const name =
+                item.dataset.name.toLowerCase();
+
+            item.style.display =
+                name.includes(query)
+                ? "flex"
+                : "none";
+
+        });
+
+}
+
+
+/* =========================================================
+   SELECT CONVERSATION
+========================================================= */
+
+const people = {
+
+    Sarah:{
+        image:"https://i.pravatar.cc/150?img=47"
+    },
+
+    Kevin:{
+        image:"https://i.pravatar.cc/150?img=11"
+    },
+
+    Grace:{
+        image:"https://i.pravatar.cc/150?img=32"
+    },
+
+    David:{
+        image:"https://i.pravatar.cc/150?img=13"
+    }
+
+};
+
+function selectConversation(name){
+
+    document.querySelectorAll(".conversation")
+        .forEach(c =>
+            c.classList.remove("active")
+        );
+
+    const selected =
+        [...document.querySelectorAll(".conversation")]
+        .find(c => c.dataset.name === name);
+
+    if(selected)
+        selected.classList.add("active");
+
+    document.getElementById("chatName")
+        .textContent = name;
+
+    if(people[name]){
+
+        document.getElementById("chatAvatar")
+            .src = people[name].image;
+
+    }
+
+    document.getElementById("chatBody").innerHTML = `
+
+        <div class="message other">
+            Salut 👋
+            <div class="message-time">
+                17:23
+            </div>
+        </div>
+
+        <div class="message me">
+            Salut ${name}, ça va ?
+            <div class="message-time">
+                17:24 ✓✓
+            </div>
+        </div>
+
+        <div class="message other">
+            Très bien ! On se parle bientôt.
+            <div class="message-time">
+                17:25
+            </div>
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
+
+function sendMessage(event){
+
+    event.preventDefault();
+
+    const input =
+        document.getElementById("messageInput");
+
+    const text =
+        input.value.trim();
+
+    if(!text)
+        return;
+
+    const chat =
+        document.getElementById("chatBody");
+
+    const message =
+        document.createElement("div");
+
+    message.className =
+        "message me";
+
+    const now =
+        new Date();
+
+    const time =
+        now.toLocaleTimeString(
+            "fr-FR",
+            {
+                hour:"2-digit",
+                minute:"2-digit"
             }
+        );
+
+    message.innerHTML = `
+        ${escapeHTML(text)}
+        <div class="message-time">
+            ${time} ✓
+        </div>
+    `;
+
+    chat.appendChild(message);
+
+    input.value = "";
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
+    /* Simulation réponse */
+
+    setTimeout(() => {
+
+        const response =
+            document.createElement("div");
+
+        response.className =
+            "message other";
+
+        response.innerHTML = `
+            Message reçu. 👌
+            <div class="message-time">
+                ${time}
+            </div>
+        `;
+
+        chat.appendChild(response);
+
+        chat.scrollTop =
+            chat.scrollHeight;
+
+    },1000);
+
+}
+
+
+/* =========================================================
+   XSS PROTECTION FOR DEMO
+========================================================= */
+
+function escapeHTML(text){
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+}
+
+
+/* =========================================================
+   CALL SYSTEM
+========================================================= */
+
+function startCall(type){
+
+    const modal =
+        document.getElementById("callModal");
+
+    const title =
+        document.getElementById("callTitle");
+
+    const status =
+        document.getElementById("callStatus");
+
+    title.textContent =
+        type === "video"
+        ? "Appel vidéo"
+        : "Appel audio";
+
+    status.textContent =
+        "Connexion...";
+
+    modal.classList.add("show");
+
+    setTimeout(() => {
+
+        status.textContent =
+            "Appel en cours";
+
+    },1500);
+
+}
+
+
+function endCall(){
+
+    closeModal("callModal");
+
+    showToast("Appel terminé");
+
+}
+
+
+/* =========================================================
+   CREATE SYSTEM
+========================================================= */
+
+let currentCreateType =
+    "publication";
+
+function switchCreate(type,button){
+
+    currentCreateType = type;
+
+    document.querySelectorAll(".create-tab")
+        .forEach(tab =>
+            tab.classList.remove("active")
+        );
+
+    button.classList.add("active");
+
+    const content =
+        document.getElementById("createContent");
+
+    if(type === "publication"){
+
+        content.innerHTML = `
+
+            <textarea
+                id="postText"
+                placeholder="Qu'as-tu envie de partager ?"
+            ></textarea>
+
+            <div
+                class="upload-area"
+                onclick="fakeUpload()"
+            >
+                ＋<br>
+                Ajouter une photo, une vidéo ou un fichier
+            </div>
+
+            <button
+                class="primary"
+                onclick="publishContent()"
+            >
+                Publier
+            </button>
+
+        `;
+
+    }
+
+    if(type === "video"){
+
+        content.innerHTML = `
+
+            <textarea
+                id="postText"
+                placeholder="Décris ta vidéo..."
+            ></textarea>
+
+            <div
+                class="upload-area"
+                onclick="fakeUpload()"
+            >
+                ▶<br>
+                Sélectionner une vidéo
+            </div>
+
+            <button
+                class="primary"
+                onclick="publishContent()"
+            >
+                Publier la vidéo
+            </button>
+
+        `;
+
+    }
+
+    if(type === "status"){
+
+        content.innerHTML = `
+
+            <textarea
+                id="postText"
+                placeholder="Écris ton statut..."
+            ></textarea>
+
+            <div
+                class="upload-area"
+                onclick="fakeUpload()"
+            >
+                ✦<br>
+                Ajouter une photo ou vidéo
+            </div>
+
+            <button
+                class="primary"
+                onclick="publishContent()"
+            >
+                Publier le statut
+            </button>
+
+        `;
+
+    }
+
+}
+
+
+function fakeUpload(){
+
+    showToast(
+        "Sélection de fichier — interface prête"
+    );
+
+}
+
+
+function publishContent(){
+
+    const textarea =
+        document.getElementById("postText");
+
+    const text =
+        textarea
+        ? textarea.value.trim()
+        : "";
+
+    if(!text){
+
+        showToast(
+            "Ajoute quelque chose avant de publier."
+        );
+
+        return;
+
+    }
+
+    showToast(
+        currentCreateType === "video"
+        ? "Vidéo publiée !"
+        : currentCreateType === "status"
+        ? "Statut publié !"
+        : "Publication créée !"
+    );
+
+    textarea.value = "";
+
+}
+
+
+/* =========================================================
+   COMMUNITY
+========================================================= */
+
+function joinCommunity(button){
+
+    if(button.dataset.joined){
+
+        button.textContent =
+            "Rejoindre";
+
+        delete button.dataset.joined;
+
+        showToast(
+            "Tu as quitté la communauté."
+        );
+
+    }else{
+
+        button.textContent =
+            "✓ Membre";
+
+        button.dataset.joined =
+            "true";
+
+        showToast(
+            "Bienvenue dans la communauté !"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+function toggleSwitch(element){
+
+    element.classList.toggle("on");
+
+    showToast(
+        element.classList.contains("on")
+        ? "Option activée"
+        : "Option désactivée"
+    );
+
+}
+
+
+/* =========================================================
+   KEYBOARD SHORTCUTS
+========================================================= */
+
+document.addEventListener("keydown",event => {
+
+    if(event.key === "Escape"){
+
+        document.querySelectorAll(".modal")
+            .forEach(modal =>
+                modal.classList.remove("show")
+            );
+
+    }
+
+});
+
+
+/* =========================================================
+   CLOSE MODALS WHEN CLICKING OUTSIDE
+========================================================= */
+
+document.querySelectorAll(".modal")
+.forEach(modal => {
+
+    modal.addEventListener("click",event => {
+
+        if(event.target === modal){
+
+            modal.classList.remove("show");
+
         }
 
-        // Gestion de la messagerie interactive
-        function openChat(id) {
-            currentActiveChat = conversations.find(c => c.id === id);
-            if(!currentActiveChat) return;
+    });
 
-            currentActiveChat.unread = false;
-            currentActiveChat.count = 0;
-            renderChats();
+});
 
-            document.getElementById('active-chat-name').innerText = currentActiveChat.name;
-            document.getElementById('active-chat-avatar').innerText = currentActiveChat.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-            
-            const box = document.getElementById('chat-messages-box');
-            box.innerHTML = "";
-            currentActiveChat.messages.forEach((msg, idx) => {
-                let typeClass = (idx % 2 === 0) ? "incoming" : "outgoing";
-                box.innerHTML += `<div class="message-bubble ${typeClass}">${msg}</div>`;
-            });
 
-            document.getElementById('chat-room').style.display = "flex";
-            box.scrollTop = box.scrollHeight;
-        }
+/* =========================================================
+   INITIALIZATION
+========================================================= */
 
-        function closeChat() {
-            document.getElementById('chat-room').style.display = "none";
-            renderChats();
-        }
+document.addEventListener("DOMContentLoaded",() => {
 
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if(!text || !currentActiveChat) return;
+    showPage("home");
 
-            currentActiveChat.messages.push(text);
-            currentActiveChat.lastMsg = "Moi: " + text;
-            currentActiveChat.time = "À l'instant";
+    console.log(
+        "KongoVibe interface initialized."
+    );
 
-            const box = document.getElementById('chat-messages-box');
-            box.innerHTML += `<div class="message-bubble outgoing">${text}</div>`;
-            input.value = "";
-            box.scrollTop = box.scrollHeight;
-            renderChats();
-        }
+});
 
-        function handleKeyPress(e) {
-            if(e.key === 'Enter') sendMessage();
-        }
 
-        // Modal d'invitation d'amis
-        function openInviteModal() {
-            document.getElementById('invite-modal').style.display = "flex";
-        }
-        function closeInviteModal() {
-            document.getElementById('invite-modal').style.display = "none";
-        }
-        function addNewContact() {
-            const nameInput = document.getElementById('new-contact-name');
-            const name = nameInput.value.trim();
-            if(!name) return;
+/* =========================================================
+   FUTURE BACKEND API PLACEHOLDER
+========================================================= */
 
-            const newConv = {
-                id: Date.now(),
-                name: name,
-                time: "À l'instant",
-                lastMsg: "Nouvelle discussion créée",
-                unread: false,
-                color: "green",
-                messages: [`Bienvenue sur KongoVibe avec ${name} !`]
-            };
+/*
+    Dans une vraie application, cette partie devra être
+    connectée à un backend.
 
-            conversations.unshift(newConv);
-            nameInput.value = "";
-            closeInviteModal();
-            renderChats();
-            openChat(newConv.id);
-        }
+    Exemple :
 
-        function filterChats() {
-            let query = document.getElementById('search-contact').value.toLowerCase();
-            let items = document.querySelectorAll('.chat-item');
-            conversations.forEach((conv, index) => {
-                if(conv.name.toLowerCase().includes(query)) {
-                    items[index].style.display = "flex";
-                } else {
-                    items[index].style.display = "none";
-                }
-            });
-        }
-    </script>
+    GET  /api/users
+    POST /api/auth/login
+    POST /api/auth/register
+
+    GET  /api/messages
+    POST /api/messages
+
+    GET  /api/posts
+    POST /api/posts
+
+    GET  /api/videos
+    POST /api/videos
+
+    POST /api/calls
+
+    GET  /api/notifications
+
+    GET  /api/communities
+
+    etc.
+
+    Le frontend actuel constitue l'interface utilisateur.
+*/
+
+
+</script>
+
 </body>
 </html>
