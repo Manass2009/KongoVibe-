@@ -3,106 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KongoVibe | Connectons la RDC</title>
-    <!-- Police Google Fonts Inter pour un look propre -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lien vers ton CSS externe -->
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Lien vers ton Manifeste PWA -->
+    <title>KongoVibe</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <!-- Couleur de la barre d'adresse (Android) -->
-    <meta name="theme-color" content="#2563eb">
-    <!-- Meta tags PWA pour iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="KongoVibe">
+    <meta name="theme-color" content="#0b0f19">
 </head>
 <body>
 
-    <!-- 1. En-tête de l'application -->
-    <header class="app-header">
-        <h1>KongoVibe 🇨🇩</h1>
-    </header>
-
-    <!-- 2. Conteneur principal (Change selon l'onglet) -->
+    <!-- CONTAINER PRINCIPAL DE L'APPLICATION -->
     <main id="app-container">
         
-        <!-- Onglet 1: Messagerie (Mode WhatsApp) -->
-        <section id="tab-messages" class="tab-content active">
-            <h2>Discussions</h2>
-            <div class="chat-list">
-                <div class="chat-item">
-                    <img src="https://via.placeholder.com/50" alt="Avatar" class="avatar">
-                    <div class="chat-info">
-                        <strong>L'Équipe KongoVibe</strong>
-                        <p>Bienvenue sur KongoVibe ! Profitez-en...</p>
+        <!-- ÉCRAN 1 : CONNEXION (Login) -->
+        <section id="screen-login" class="screen">
+            <div class="login-content">
+                <div class="brand-header">
+                    <img src="logo.jpg" alt="Logo" class="login-logo">
+                    <h1>KongoVibe</h1>
+                </div>
+                <div class="welcome-text">
+                    <h2>Bienvenue</h2>
+                    <p>Connectez-vous ou créez un compte</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <div class="input-box">
+                        <input type="email" placeholder="votre@email.com">
+                        <span class="input-icon">✉️</span>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <div class="input-box">
+                        <input type="password" placeholder="••••••••">
+                        <span class="input-icon">👁️</span>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="goToApp()">Se connecter</button>
+
+                <div class="signup-prompt">
+                    Pas encore de compte ? <a href="#" class="highlight-link">S'inscrire</a>
+                </div>
+
+                <div class="divider">ou continuer avec</div>
+
+                <div class="social-login">
+                    <button class="btn-social">Google</button>
+                    <button class="btn-social">Apple</button>
+                </div>
+
+                <p class="terms-text">En continuant vous acceptez nos Conditions • Politique de confidentialité</p>
             </div>
         </section>
 
-        <!-- Onglet 2: Fil d'Actualité (Mode Facebook) -->
-        <section id="tab-feed" class="tab-content">
-            <h2>Kongo Feed</h2>
-            <div class="feed-list">
-                <div class="post-card">
-                    <div class="post-header">
-                        <img src="https://via.placeholder.com/40" alt="Avatar" class="avatar-sm">
-                        <strong>Mireille K.</strong>
-                    </div>
-                    <div class="post-content">
-                        <p>Le soleil se lève sur Kinshasa ! Excellente journée à tous. ☀️🇨🇩</p>
-                    </div>
+        <!-- APPLICATION PRINCIPALE (Onglets Messages & Reels) -->
+        <div id="main-app" class="hidden">
+            
+            <!-- ONGLET MESSAGES -->
+            <section id="tab-messages" class="tab-content active">
+                <div class="tab-header">
+                    <h2>Messages</h2>
+                    <button class="icon-circle-btn">✏️</button>
                 </div>
-            </div>
-        </section>
 
-        <!-- Onglet 3: Shorts Vidéo (Mode TikTok) -->
-        <section id="tab-shorts" class="tab-content">
-            <!-- Mode Plein Écran Vidéo -->
-            <div class="shorts-viewer">
-                <div class="short-video" style="background-image: url('https://via.placeholder.com/360x640/000000/FFFFFF?text=Vidéo+1');">
-                    <div class="short-meta">
-                        <strong>@Tresor</strong>
-                        <p>Dédicace à Goma ! 💪 #KongoVibe</p>
+                <div class="search-bar-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Rechercher une conversation...">
+                </div>
+
+                <div class="chat-list">
+                    <div class="chat-item">
+                        <div class="avatar-badge">AM</div>
+                        <div class="chat-info">
+                            <div class="chat-name-row">
+                                <h4>Amani Mbuyi</h4>
+                                <span class="time">10:42</span>
+                            </div>
+                            <div class="chat-msg-row">
+                                <p>On se voit demain au marché? 👍</p>
+                                <span class="unread-dot"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="avatar-badge red">JK</div>
+                        <div class="chat-info">
+                            <div class="chat-name-row">
+                                <h4>Junior Kinshasa</h4>
+                                <span class="time">10:42</span>
+                            </div>
+                            <p>Le lien est ici 👆 J'ai envoyé la vidéo</p>
+                        </div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="avatar-badge purple">MB</div>
+                        <div class="chat-info">
+                            <div class="chat-name-row">
+                                <h4>Maman B.</h4>
+                                <span class="time">Hier</span>
+                            </div>
+                            <div class="chat-msg-row">
+                                <p>N'oublie pas d'acheter le fufu 🙏</p>
+                                <span class="badge-number">2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="avatar-badge green">👥</div>
+                        <div class="chat-info">
+                            <div class="chat-name-row">
+                                <h4>Groupe — Lubumbashi Crew</h4>
+                                <span class="time">12:30</span>
+                            </div>
+                            <p>Trésor: Qui vient pour la soirée?</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-        
+            </section>
+
+            <!-- ONGLET REELS / SHORTS -->
+            <section id="tab-reels" class="tab-content">
+                <div class="reels-header">
+                    <h3>Reels</h3>
+                    <div class="reels-header-icons">
+                        <span>🔍</span>
+                        <span>📷</span>
+                    </div>
+                </div>
+
+                <div class="reel-view">
+                    <!-- Simulation de la vidéo en arrière-plan -->
+                    <div class="reel-overlay-content">
+                        <div class="reel-author-box">
+                            <img src="logo.jpg" class="avatar-mini" alt="Avatar">
+                            <span class="reel-username">@tresor_drc 🛡️</span>
+                        </div>
+                        <p class="reel-caption">Belle soirée à Kinshasa 🇨🇩 #KongoVibe #RDC #Kinshasa</p>
+                        <div class="reel-audio">♪ Ambiance Afro • INNOSS'B</div>
+                    </div>
+
+                    <div class="reel-sidebar-actions">
+                        <button class="reel-act-btn">❤️ <span>12,4k</span></button>
+                        <button class="reel-act-btn">💬 <span>286</span></button>
+                        <button class="reel-act-btn">↗️ <span>Share</span></button>
+                        <button class="reel-act-btn">🔖</button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
     </main>
 
-    <!-- 3. Barre de Navigation Inférieure -->
-    <nav class="bottom-nav">
-        <button class="nav-btn active" data-tab="messages">
-            <span class="icon">💬</span>
-            <span class="label">Messages</span>
-        </button>
-        <button class="nav-btn" data-tab="feed">
-            <span class="icon">📰</span>
-            <span class="label">Feed</span>
-        </button>
-        <button class="nav-btn" data-tab="shorts">
-            <span class="icon">🎬</span>
-            <span class="label">Shorts</span>
-        </button>
+    <!-- BARRE DE NAVIGATION INFÉRIEURE (Visible après connexion) -->
+    <nav class="bottom-nav hidden" id="bottom-nav">
+        <button class="nav-btn" onclick="switchTab('messages')">💬</button>
+        <button class="nav-btn" onclick="switchTab('explore')">👤</button>
+        <button class="nav-btn btn-plus" onclick="switchTab('create')"><span>+</span></button>
+        <button class="nav-btn active" onclick="switchTab('reels')">🎬</button>
+        <button class="nav-btn" onclick="switchTab('profile')">👤</button>
     </nav>
 
-    <!-- JS Principal -->
-    <script src="js/app.js"></script>
-    <script>
-        // Enregistrement du Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('KongoVibe Service Worker enregistré avec succès :', registration.scope);
-                    })
-                    .catch(err => {
-                        console.log('Échec de l\'enregistrement du Service Worker :', err);
-                    });
-            });
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
