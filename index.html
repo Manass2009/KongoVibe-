@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KongoVibe | Connectons la RDC</title>
+    <!-- Police Google Fonts Inter pour un look propre -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lien vers ton CSS externe -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Lien vers ton Manifeste PWA -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Couleur de la barre d'adresse (Android) -->
+    <meta name="theme-color" content="#2563eb">
+    <!-- Meta tags PWA pour iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="KongoVibe">
+</head>
+<body>
+
+    <!-- 1. En-tête de l'application -->
+    <header class="app-header">
+        <h1>KongoVibe 🇨🇩</h1>
+    </header>
+
+    <!-- 2. Conteneur principal (Change selon l'onglet) -->
+    <main id="app-container">
+        
+        <!-- Onglet 1: Messagerie (Mode WhatsApp) -->
+        <section id="tab-messages" class="tab-content active">
+            <h2>Discussions</h2>
+            <div class="chat-list">
+                <div class="chat-item">
+                    <img src="https://via.placeholder.com/50" alt="Avatar" class="avatar">
+                    <div class="chat-info">
+                        <strong>L'Équipe KongoVibe</strong>
+                        <p>Bienvenue sur KongoVibe ! Profitez-en...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Onglet 2: Fil d'Actualité (Mode Facebook) -->
+        <section id="tab-feed" class="tab-content">
+            <h2>Kongo Feed</h2>
+            <div class="feed-list">
+                <div class="post-card">
+                    <div class="post-header">
+                        <img src="https://via.placeholder.com/40" alt="Avatar" class="avatar-sm">
+                        <strong>Mireille K.</strong>
+                    </div>
+                    <div class="post-content">
+                        <p>Le soleil se lève sur Kinshasa ! Excellente journée à tous. ☀️🇨🇩</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Onglet 3: Shorts Vidéo (Mode TikTok) -->
+        <section id="tab-shorts" class="tab-content">
+            <!-- Mode Plein Écran Vidéo -->
+            <div class="shorts-viewer">
+                <div class="short-video" style="background-image: url('https://via.placeholder.com/360x640/000000/FFFFFF?text=Vidéo+1');">
+                    <div class="short-meta">
+                        <strong>@Tresor</strong>
+                        <p>Dédicace à Goma ! 💪 #KongoVibe</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- 3. Barre de Navigation Inférieure -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-tab="messages">
+            <span class="icon">💬</span>
+            <span class="label">Messages</span>
+        </button>
+        <button class="nav-btn" data-tab="feed">
+            <span class="icon">📰</span>
+            <span class="label">Feed</span>
+        </button>
+        <button class="nav-btn" data-tab="shorts">
+            <span class="icon">🎬</span>
+            <span class="label">Shorts</span>
+        </button>
+    </nav>
+
+    <!-- JS Principal -->
+    <script src="js/app.js"></script>
+    <script>
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('KongoVibe Service Worker enregistré avec succès :', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('Échec de l\'enregistrement du Service Worker :', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
