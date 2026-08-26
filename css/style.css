@@ -1,0 +1,201 @@
+/* --- Variables & Reset --- */
+:root {
+    --primary-color: #2563eb; /* Bleu */
+    --accent-color: #facc15;  /* Jaune (RDC) */
+    --danger-color: #ef4444;  /* Rouge */
+    --bg-color: #f8fafc;
+    --text-color: #1e293b;
+    --nav-bg: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden; /* Empêche le scroll global */
+}
+
+/* --- Header --- */
+.app-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1001;
+}
+
+.app-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* --- Main App Container & Tabs --- */
+#app-container {
+    flex: 1;
+    overflow-y: auto; /* Le scroll se fait ici */
+    position: relative;
+}
+
+.tab-content {
+    display: none;
+    padding: 16px;
+    padding-bottom: 90px; /* Espace pour la barre de nav */
+}
+
+.tab-content.active {
+    display: block;
+}
+
+h2 {
+    margin-bottom: 16px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* --- Style Messagerie (Onglet 1) --- */
+.chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-item {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.chat-info {
+    flex: 1;
+}
+
+.chat-info strong {
+    font-size: 1rem;
+}
+
+.chat-info p {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* --- Style Feed (Onglet 2) --- */
+.feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.post-card {
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.post-content {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* --- Style Shorts (Onglet 3) --- */
+.tab-content#tab-shorts {
+    padding: 0;
+    height: 100%;
+}
+
+.shorts-viewer {
+    height: calc(100vh - 65px - 58px); /* Calcule hauteur dispo */
+    display: flex;
+    flex-direction: column;
+}
+
+.short-video {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+    color: white;
+    padding: 20px;
+}
+
+.short-meta {
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    width: 100%;
+    padding: 10px 0;
+}
+
+/* --- Bottom Nav --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: var(--nav-bg);
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: #94a3b8;
+    padding: 10px;
+}
+
+.nav-btn.active {
+    color: var(--primary-color);
+}
+
+.nav-btn .icon {
+    font-size: 1.5rem;
+}
+
+.nav-btn .label {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
