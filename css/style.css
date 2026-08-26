@@ -1,173 +1,419 @@
-/* --- Variables & Reset --- */
 :root {
-    --primary-color: #2563eb; /* Bleu */
-    --accent-color: #facc15;  /* Jaune (RDC) */
-    --danger-color: #ef4444;  /* Rouge */
-    --bg-color: #f8fafc;
-    --text-color: #1e293b;
-    --nav-bg: #ffffff;
+    --bg-dark: #0b0f19;
+    --bg-card: #131b2e;
+    --bg-input: #1b2640;
+    --primary-blue: #3b82f6;
+    --accent-yellow: #facc15;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #223049;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden; /* Empêche le scroll global */
+    overflow: hidden;
 }
 
-/* --- Header --- */
-.app-header {
-    background: var(--primary-color);
-    color: white;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    z-index: 1001;
+.hidden {
+    display: none !important;
 }
 
-.app-header h1 {
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-
-/* --- Main App Container & Tabs --- */
 #app-container {
     flex: 1;
-    overflow-y: auto; /* Le scroll se fait ici */
+    overflow-y: auto;
     position: relative;
 }
 
+/* --- ÉCRAN DE CONNEXION --- */
+.screen {
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    justify-content: center;
+}
+
+.brand-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.login-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 2px solid var(--accent-yellow);
+}
+
+.brand-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.welcome-text {
+    margin-bottom: 24px;
+}
+
+.welcome-text h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.welcome-text p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.input-box {
+    position: relative;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+}
+
+.input-box input {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 14px 0;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.input-icon {
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.signup-prompt {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 20px 0;
+}
+
+.highlight-link {
+    color: var(--accent-yellow);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.divider {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.social-login {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-social {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 12px;
+    color: var(--text-main);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.terms-text {
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+/* --- INTERFACE APP PRINCIPALE --- */
 .tab-content {
     display: none;
     padding: 16px;
-    padding-bottom: 90px; /* Espace pour la barre de nav */
+    padding-bottom: 90px;
 }
 
 .tab-content.active {
     display: block;
 }
 
-h2 {
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #475569;
-}
-
-/* --- Style Messagerie (Onglet 1) --- */
-.chat-list {
+.tab-header {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.chat-item {
-    background: white;
-    padding: 12px;
-    border-radius: 12px;
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 16px;
 }
 
-.avatar {
-    width: 50px;
-    height: 50px;
+.tab-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.icon-circle-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    cursor: pointer;
 }
 
-.chat-info {
-    flex: 1;
+.search-bar-container {
+    position: relative;
+    margin-bottom: 20px;
 }
 
-.chat-info strong {
-    font-size: 1rem;
+.search-bar-container input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 12px 16px 12px 42px;
+    border-radius: 24px;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    outline: none;
 }
 
-.chat-info p {
-    font-size: 0.875rem;
-    color: #64748b;
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
-/* --- Style Feed (Onglet 2) --- */
-.feed-list {
+/* Liste des messages */
+.chat-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.post-card {
-    background: white;
-    padding: 16px;
-    border-radius: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.post-header {
+.chat-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 14px;
+    cursor: pointer;
 }
 
-.avatar-sm {
-    width: 40px;
-    height: 40px;
+.avatar-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0ea5e9;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.avatar-badge.red { background: #ef4444; }
+.avatar-badge.purple { background: #8b5cf6; }
+.avatar-badge.green { background: #10b981; }
+
+.chat-info {
+    flex: 1;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.chat-name-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.chat-name-row h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.chat-info p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.chat-msg-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-yellow);
     border-radius: 50%;
 }
 
-.post-content {
-    font-size: 0.95rem;
-    line-height: 1.5;
+.badge-number {
+    background: var(--accent-yellow);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
 }
 
-/* --- Style Shorts (Onglet 3) --- */
-.tab-content#tab-shorts {
-    padding: 0;
-    height: 100%;
-}
-
-.shorts-viewer {
-    height: calc(100vh - 65px - 58px); /* Calcule hauteur dispo */
+/* --- ÉCRAN REELS --- */
+.reels-header {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
 }
 
-.short-video {
-    width: 100%;
-    height: 100%;
+.reels-header h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.reels-header-icons {
+    display: flex;
+    gap: 16px;
+    font-size: 1.1rem;
+}
+
+.reel-view {
+    height: calc(100vh - 150px);
+    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('logo.jpg');
     background-size: cover;
     background-position: center;
+    border-radius: 16px;
+    position: relative;
     display: flex;
     align-items: flex-end;
-    color: white;
     padding: 20px;
+    border: 1px solid var(--border-color);
 }
 
-.short-meta {
-    background: linear-gradient(transparent, rgba(0,0,0,0.7));
-    width: 100%;
-    padding: 10px 0;
+.reel-overlay-content {
+    z-index: 2;
+    max-width: 80%;
 }
 
-/* --- Bottom Nav --- */
+.reel-author-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.avatar-mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reel-username {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.reel-caption {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.reel-audio {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.reel-sidebar-actions {
+    position: absolute;
+    right: 16px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: center;
+    z-index: 3;
+}
+
+.reel-act-btn {
+    background: none;
+    border: none;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+.reel-act-btn span {
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+/* --- NAVIGATION DU BAS --- */
 .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 65px;
-    background: var(--nav-bg);
-    border-top: 1px solid #e2e8f0;
+    background: #0f172a;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -177,25 +423,24 @@ h2 {
 .nav-btn {
     background: none;
     border: none;
+    font-size: 1.2rem;
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    color: #94a3b8;
-    padding: 10px;
+    color: var(--text-muted);
 }
 
 .nav-btn.active {
-    color: var(--primary-color);
+    color: var(--text-main);
 }
 
-.nav-btn .icon {
-    font-size: 1.5rem;
+.btn-plus span {
+    background: var(--accent-yellow);
+    color: #000;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 1.2rem;
 }
-
-.nav-btn .label {
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
