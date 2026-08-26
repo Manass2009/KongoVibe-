@@ -4,131 +4,174 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KongoVibe</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --bg-card: #131b2e;
+            --bg-input: #1b2640;
+            --accent-yellow: #facc15;
+            --primary-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #223049;
+            --chat-bubble: #1e293b;
+            --chat-me: #2563eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .hidden { display: none !important; }
+        #app-container { flex: 1; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+
+        /* Écrans */
+        .screen { padding: 24px 20px; display: flex; flex-direction: column; min-height: 100%; justify-content: center; }
+        .brand-header { text-align: center; margin-bottom: 24px; }
+        .login-logo { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 10px; border: 2px solid var(--accent-yellow); }
+        .brand-header h1 { font-size: 1.8rem; font-weight: 800; }
+        .welcome-text { margin-bottom: 24px; }
+        .welcome-text h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+        .welcome-text p { font-size: 0.85rem; color: var(--text-muted); }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
+        .input-box { position: relative; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 14px; display: flex; align-items: center; padding: 0 14px; }
+        .input-box input { width: 100%; background: none; border: none; padding: 14px 0; color: var(--text-main); font-size: 0.9rem; outline: none; }
+        
+        .btn-primary { width: 100%; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .signup-prompt { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin: 20px 0; }
+        .highlight-link { color: var(--accent-yellow); text-decoration: none; font-weight: 600; cursor: pointer; }
+
+        /* Application principale */
+        .tab-content { display: none; padding: 16px; padding-bottom: 90px; flex: 1; overflow-y: auto; }
+        .tab-content.active { display: block; }
+        .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .tab-header h2 { font-size: 1.5rem; font-weight: 800; }
+        
+        .icon-circle-btn { background: var(--bg-card); border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; }
+        .search-bar-container { position: relative; margin-bottom: 20px; }
+        .search-bar-container input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); padding: 12px 16px 12px 42px; border-radius: 24px; color: var(--text-main); font-size: 0.85rem; outline: none; }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); }
+
+        /* Liste chats */
+        .chat-list { display: flex; flex-direction: column; gap: 16px; }
+        .chat-item { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+        .avatar-badge { width: 48px; height: 48px; border-radius: 50%; background: #0ea5e9; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .avatar-badge.red { background: #ef4444; }
+        .avatar-badge.purple { background: #8b5cf6; }
+        .avatar-badge.green { background: #10b981; }
+        .chat-info { flex: 1; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+        .chat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .chat-name-row h4 { font-size: 0.95rem; font-weight: 700; }
+        .time { font-size: 0.75rem; color: var(--text-muted); }
+        .chat-info p { font-size: 0.82rem; color: var(--text-muted); }
+
+        /* Vue Conversation interactive (Style WhatsApp) */
+        #chat-room { display: none; flex-direction: column; height: 100vh; position: absolute; top: 0; left: 0; width: 100%; background: var(--bg-dark); z-index: 200; }
+        .chat-room-header { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+        .chat-messages-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
+        .message-bubble { max-width: 75%; padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.4; word-break: break-word; }
+        .message-bubble.incoming { background: var(--chat-bubble); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .message-bubble.outgoing { background: var(--chat-me); align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-input-area { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); padding: 10px 16px; display: flex; gap: 10px; border-top: 1px solid var(--border-color); align-items: center; }
+        .chat-input-area input { flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); padding: 12px; border-radius: 24px; color: white; outline: none; font-size: 0.9rem; }
+        .send-btn { background: var(--accent-yellow); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; color: #000; }
+
+        /* Modal Invitation / Nouveau Contact */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 500; padding: 20px; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px; }
+        .modal-content h3 { font-size: 1.2rem; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: white; padding: 10px 16px; border-radius: 10px; cursor: pointer; }
+        .btn-accent { background: var(--accent-yellow); border: none; color: #000; font-weight: 700; padding: 10px 16px; border-radius: 10px; cursor: pointer; }
+
+        /* Reels */
+        .reels-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 10px; }
+        .reel-view { height: calc(100vh - 160px); background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('logo.jpg'); background-size: cover; background-position: center; border-radius: 16px; position: relative; display: flex; align-items: flex-end; padding: 20px; border: 1px solid var(--border-color); }
+        .reel-overlay-content { z-index: 2; max-width: 80%; }
+        .reel-author-box { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .avatar-mini { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .reel-username { font-weight: 700; font-size: 0.9rem; }
+        .reel-caption { font-size: 0.85rem; line-height: 1.4; margin-bottom: 8px; }
+        .reel-audio { font-size: 0.75rem; color: var(--text-muted); }
+        .reel-sidebar-actions { position: absolute; right: 16px; bottom: 24px; display: flex; flex-direction: column; gap: 14px; align-items: center; z-index: 3; }
+        .reel-act-btn { background: none; border: none; color: white; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 1.3rem; cursor: pointer; }
+        .reel-act-btn span { font-size: 0.65rem; font-weight: 600; }
+
+        /* Navigation du bas */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #0f172a; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); }
+        .nav-btn.active { color: var(--text-main); }
+        .btn-plus span { background: var(--accent-yellow); color: #000; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; font-size: 1.2rem; }
+    </style>
 </head>
 <body>
 
-    <!-- CONTAINER PRINCIPAL DE L'APPLICATION -->
     <main id="app-container">
         
-        <!-- ÉCRAN 1 : CONNEXION (Login) -->
-        <section id="screen-login" class="screen">
-            <div class="login-content">
-                <div class="brand-header">
-                    <img src="logo.jpg" alt="Logo" class="login-logo">
-                    <h1>KongoVibe</h1>
+        <!-- ÉCRAN DE CONNEXION / INSCRIPTION -->
+        <section id="screen-auth" class="screen">
+            <div class="brand-header">
+                <img src="logo.jpg" alt="Logo" class="login-logo">
+                <h1>KongoVibe</h1>
+            </div>
+            <div class="welcome-text">
+                <h2 id="auth-title">Bienvenue</h2>
+                <p id="auth-subtitle">Connectez-vous ou créez un compte</p>
+            </div>
+
+            <div class="form-group" id="name-field" style="display: none;">
+                <label>Nom complet</label>
+                <div class="input-box">
+                    <input type="text" id="signup-name" placeholder="Ex: Tresor Mbuyi">
                 </div>
-                <div class="welcome-text">
-                    <h2>Bienvenue</h2>
-                    <p>Connectez-vous ou créez un compte</p>
+            </div>
+
+            <div class="form-group">
+                <label>Numéro de téléphone ou Email</label>
+                <div class="input-box">
+                    <input type="text" id="auth-input" placeholder="votre@email.com ou +243...">
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label>Email</label>
-                    <div class="input-box">
-                        <input type="email" placeholder="votre@email.com">
-                        <span class="input-icon">✉️</span>
-                    </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <div class="input-box">
+                    <input type="password" id="auth-password" placeholder="••••••••">
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label>Mot de passe</label>
-                    <div class="input-box">
-                        <input type="password" placeholder="••••••••">
-                        <span class="input-icon">👁️</span>
-                    </div>
-                </div>
+            <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Se connecter</button>
 
-                <button class="btn-primary" onclick="goToApp()">Se connecter</button>
-
-                <div class="signup-prompt">
-                    Pas encore de compte ? <a href="#" class="highlight-link">S'inscrire</a>
-                </div>
-
-                <div class="divider">ou continuer avec</div>
-
-                <div class="social-login">
-                    <button class="btn-social">Google</button>
-                    <button class="btn-social">Apple</button>
-                </div>
-
-                <p class="terms-text">En continuant vous acceptez nos Conditions • Politique de confidentialité</p>
+            <div class="signup-prompt">
+                <span id="toggle-prompt-text">Pas encore de compte ?</span> 
+                <a class="highlight-link" onclick="toggleAuthMode()" id="toggle-auth-link">S'inscrire</a>
             </div>
         </section>
 
-        <!-- APPLICATION PRINCIPALE (Onglets Messages & Reels) -->
-        <div id="main-app" class="hidden">
+        <!-- APPLICATION PRINCIPALE -->
+        <div id="main-app" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
             
             <!-- ONGLET MESSAGES -->
             <section id="tab-messages" class="tab-content active">
                 <div class="tab-header">
                     <h2>Messages</h2>
-                    <button class="icon-circle-btn">✏️</button>
+                    <button class="icon-circle-btn" onclick="openInviteModal()" title="Inviter un ami">➕</button>
                 </div>
 
                 <div class="search-bar-container">
                     <span class="search-icon">🔍</span>
-                    <input type="text" placeholder="Rechercher une conversation...">
+                    <input type="text" id="search-contact" placeholder="Rechercher une conversation..." onkeyup="filterChats()">
                 </div>
 
-                <div class="chat-list">
-                    <div class="chat-item">
-                        <div class="avatar-badge">AM</div>
-                        <div class="chat-info">
-                            <div class="chat-name-row">
-                                <h4>Amani Mbuyi</h4>
-                                <span class="time">10:42</span>
-                            </div>
-                            <div class="chat-msg-row">
-                                <p>On se voit demain au marché? 👍</p>
-                                <span class="unread-dot"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="chat-item">
-                        <div class="avatar-badge red">JK</div>
-                        <div class="chat-info">
-                            <div class="chat-name-row">
-                                <h4>Junior Kinshasa</h4>
-                                <span class="time">10:42</span>
-                            </div>
-                            <p>Le lien est ici 👆 J'ai envoyé la vidéo</p>
-                        </div>
-                    </div>
-
-                    <div class="chat-item">
-                        <div class="avatar-badge purple">MB</div>
-                        <div class="chat-info">
-                            <div class="chat-name-row">
-                                <h4>Maman B.</h4>
-                                <span class="time">Hier</span>
-                            </div>
-                            <div class="chat-msg-row">
-                                <p>N'oublie pas d'acheter le fufu 🙏</p>
-                                <span class="badge-number">2</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="chat-item">
-                        <div class="avatar-badge green">👥</div>
-                        <div class="chat-info">
-                            <div class="chat-name-row">
-                                <h4>Groupe — Lubumbashi Crew</h4>
-                                <span class="time">12:30</span>
-                            </div>
-                            <p>Trésor: Qui vient pour la soirée?</p>
-                        </div>
-                    </div>
+                <div class="chat-list" id="chat-list-container">
+                    <!-- Les conversations dynamiques s'insèrent ici -->
                 </div>
             </section>
 
-            <!-- ONGLET REELS / SHORTS -->
+            <!-- ONGLET REELS -->
             <section id="tab-reels" class="tab-content">
                 <div class="reels-header">
                     <h3>Reels</h3>
@@ -139,7 +182,6 @@
                 </div>
 
                 <div class="reel-view">
-                    <!-- Simulation de la vidéo en arrière-plan -->
                     <div class="reel-overlay-content">
                         <div class="reel-author-box">
                             <img src="logo.jpg" class="avatar-mini" alt="Avatar">
@@ -157,19 +199,222 @@
                     </div>
                 </div>
             </section>
-
         </div>
+
+        <!-- FENÊTRE DE CHAT INDividuel (Style WhatsApp) -->
+        <div id="chat-room">
+            <div class="chat-room-header">
+                <button class="back-btn" onclick="closeChat()">⬅️</button>
+                <div class="avatar-badge" id="active-chat-avatar" style="width: 36px; height: 36px; font-size: 0.8rem;">AM</div>
+                <h3 id="active-chat-name" style="font-size: 1rem; flex: 1;">Nom du contact</h3>
+            </div>
+            <div class="chat-messages-box" id="chat-messages-box">
+                <!-- Messages injectés dynamiquement -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="message-input" placeholder="Écrire un message..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+
+        <!-- MODAL : INVITATION / AJOUT DE CONTACT -->
+        <div class="modal" id="invite-modal">
+            <div class="modal-content">
+                <h3>Inviter un ami / Ajouter un contact</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Entre le numéro ou le nom de ton ami pour lancer une discussion.</p>
+                <div class="form-group" style="margin-bottom:0;">
+                    <input type="text" id="new-contact-name" placeholder="Nom de l'ami (ex: Christian)" style="width:100%; background:var(--bg-input); border:1px solid var(--border-color); padding:12px; border-radius:10px; color:white; outline:none;">
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-secondary" onclick="closeInviteModal()">Annuler</button>
+                    <button class="btn-accent" onclick="addNewContact()">Démarrer le chat</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <!-- BARRE DE NAVIGATION INFÉRIEURE (Visible après connexion) -->
+    <!-- BARRE DE NAVIGATION -->
     <nav class="bottom-nav hidden" id="bottom-nav">
-        <button class="nav-btn" onclick="switchTab('messages')">💬</button>
-        <button class="nav-btn" onclick="switchTab('explore')">👤</button>
-        <button class="nav-btn btn-plus" onclick="switchTab('create')"><span>+</span></button>
-        <button class="nav-btn active" onclick="switchTab('reels')">🎬</button>
-        <button class="nav-btn" onclick="switchTab('profile')">👤</button>
+        <button class="nav-btn active" id="nav-msg-btn" onclick="switchTab('messages')">💬</button>
+        <button class="nav-btn" onclick="alert('Profil utilisateur')">👤</button>
+        <button class="nav-btn btn-plus" onclick="openInviteModal()"><span>+</span></button>
+        <button class="nav-btn" id="nav-reel-btn" onclick="switchTab('reels')">🎬</button>
+        <button class="nav-btn" onclick="alert('Paramètres')">⚙️</button>
     </nav>
 
-    <script src="script.js"></script>
+    <script>
+        // Gestion de l'état de l'application & Stockage local par défaut
+        let isSignup = false;
+        let currentActiveChat = null;
+
+        // Base de données locale de conversations (Initialisée avec tes exemples)
+        let conversations = JSON.parse(localStorage.getItem('KV_CONVS')) || [
+            { id: 1, name: "Amani Mbuyi", time: "10:42", lastMsg: "On se voit demain au marché? 👍", unread: true, color: "", messages: ["Salut ! On se voit demain au marché? 👍"] },
+            { id: 2, name: "Junior Kinshasa", time: "10:42", lastMsg: "Le lien est ici 👆 J'ai envoyé la vidéo", unread: false, color: "red", messages: ["Le lien est ici 👆 J'ai envoyé la vidéo"] },
+            { id: 3, name: "Maman B.", time: "Hier", lastMsg: "N'oublie pas d'acheter le fufu 🙏", unread: false, count: 2, color: "purple", messages: ["N'oublie pas d'acheter le fufu 🙏"] },
+            { id: 4, name: "Groupe — Lubumbashi Crew", time: "12:30", lastMsg: "Trésor: Qui vient pour la soirée?", unread: false, color: "green", messages: ["Trésor: Qui vient pour la soirée?"] }
+        ];
+
+        function toggleAuthMode() {
+            isSignup = !isSignup;
+            document.getElementById('auth-title').innerText = isSignup ? "Créer un compte" : "Bienvenue";
+            document.getElementById('auth-subtitle').innerText = isSignup ? "Rejoins KongoVibe dès aujourd'hui" : "Connectez-vous ou créez un compte";
+            document.getElementById('auth-btn').innerText = isSignup ? "S'inscrire" : "Se connecter";
+            document.getElementById('name-field').style.display = isSignup ? "block" : "none";
+            document.getElementById('toggle-prompt-text').innerText = isSignup ? "Déjà un compte ?" : "Pas encore de compte ?";
+            document.getElementById('toggle-auth-link').innerText = isSignup ? "Se connecter" : "S'inscrire";
+        }
+
+        function handleAuth() {
+            const inputVal = document.getElementById('auth-input').value;
+            const passVal = document.getElementById('auth-password').value;
+            if(!inputVal || !passVal) {
+                alert("Veuillez remplir tous les champs !");
+                return;
+            }
+            // Transition vers l'application principale
+            document.getElementById('screen-auth').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            renderChats();
+        }
+
+        function renderChats() {
+            const container = document.getElementById('chat-list-container');
+            container.innerHTML = "";
+            
+            conversations.forEach(conv => {
+                let initials = conv.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+                let unreadHtml = conv.unread ? `<span class="unread-dot"></span>` : (conv.count ? `<span class="badge-number">${conv.count}</span>` : '');
+                
+                let html = `
+                    <div class="chat-item" onclick="openChat(${conv.id})">
+                        <div class="avatar-badge ${conv.color}">${initials}</div>
+                        <div class="chat-info">
+                            <div class="chat-name-row">
+                                <h4>${conv.name}</h4>
+                                <span class="time">${conv.time}</span>
+                            </div>
+                            <div class="chat-msg-row">
+                                <p>${conv.lastMsg}</p>
+                                ${unreadHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+            localStorage.setItem('KV_CONVS', JSON.stringify(conversations));
+        }
+
+        function switchTab(tabName) {
+            const msgTab = document.getElementById('tab-messages');
+            const reelsTab = document.getElementById('tab-reels');
+            const navMsg = document.getElementById('nav-msg-btn');
+            const navReel = document.getElementById('nav-reel-btn');
+
+            if (tabName === 'messages') {
+                msgTab.classList.add('active');
+                reelsTab.classList.remove('active');
+                navMsg.classList.add('active');
+                navReel.classList.remove('active');
+            } else if (tabName === 'reels') {
+                reelsTab.classList.add('active');
+                msgTab.classList.remove('active');
+                navReel.classList.add('active');
+                navMsg.classList.remove('active');
+            }
+        }
+
+        // Gestion de la messagerie interactive
+        function openChat(id) {
+            currentActiveChat = conversations.find(c => c.id === id);
+            if(!currentActiveChat) return;
+
+            currentActiveChat.unread = false;
+            currentActiveChat.count = 0;
+            renderChats();
+
+            document.getElementById('active-chat-name').innerText = currentActiveChat.name;
+            document.getElementById('active-chat-avatar').innerText = currentActiveChat.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+            
+            const box = document.getElementById('chat-messages-box');
+            box.innerHTML = "";
+            currentActiveChat.messages.forEach((msg, idx) => {
+                let typeClass = (idx % 2 === 0) ? "incoming" : "outgoing";
+                box.innerHTML += `<div class="message-bubble ${typeClass}">${msg}</div>`;
+            });
+
+            document.getElementById('chat-room').style.display = "flex";
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function closeChat() {
+            document.getElementById('chat-room').style.display = "none";
+            renderChats();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if(!text || !currentActiveChat) return;
+
+            currentActiveChat.messages.push(text);
+            currentActiveChat.lastMsg = "Moi: " + text;
+            currentActiveChat.time = "À l'instant";
+
+            const box = document.getElementById('chat-messages-box');
+            box.innerHTML += `<div class="message-bubble outgoing">${text}</div>`;
+            input.value = "";
+            box.scrollTop = box.scrollHeight;
+            renderChats();
+        }
+
+        function handleKeyPress(e) {
+            if(e.key === 'Enter') sendMessage();
+        }
+
+        // Modal d'invitation d'amis
+        function openInviteModal() {
+            document.getElementById('invite-modal').style.display = "flex";
+        }
+        function closeInviteModal() {
+            document.getElementById('invite-modal').style.display = "none";
+        }
+        function addNewContact() {
+            const nameInput = document.getElementById('new-contact-name');
+            const name = nameInput.value.trim();
+            if(!name) return;
+
+            const newConv = {
+                id: Date.now(),
+                name: name,
+                time: "À l'instant",
+                lastMsg: "Nouvelle discussion créée",
+                unread: false,
+                color: "green",
+                messages: [`Bienvenue sur KongoVibe avec ${name} !`]
+            };
+
+            conversations.unshift(newConv);
+            nameInput.value = "";
+            closeInviteModal();
+            renderChats();
+            openChat(newConv.id);
+        }
+
+        function filterChats() {
+            let query = document.getElementById('search-contact').value.toLowerCase();
+            let items = document.querySelectorAll('.chat-item');
+            conversations.forEach((conv, index) => {
+                if(conv.name.toLowerCase().includes(query)) {
+                    items[index].style.display = "flex";
+                } else {
+                    items[index].style.display = "none";
+                }
+            });
+        }
+    </script>
 </body>
 </html>
