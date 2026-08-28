@@ -1,26 +1,26 @@
 {
-  "name": "Aura — Communiquer, découvrir, créer",
-  "short_name": "Aura",
+  "name": "KongoVibe — Communiquer, découvrir, créer",
+  "short_name": "KongoVibe",
   "description": "Une seule plateforme pour parler, appeler, regarder, créer et rejoindre des communautés.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#07060c",
-  "theme_color": "#07060c",
+  "background_color": "#060916",
+  "theme_color": "#060916",
   "lang": "fr",
   "icons": [
     {
-      "src": "icons/logo.jpg",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
     },
     {
-      "src": "icons/logo.jpg",
+      "src": "logo.jpg",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ]
 }
