@@ -1,48 +1,44 @@
-const CACHE_NAME = 'kongovibe-v1';
-const ASSETS_TO_CACHE = [logo.png]
+// Service worker de base pour Aura — met en cache le "shell" de l'application
+// afin qu'elle reste consultable même sans connexion (voir cahier des charges §23-24).
+
+const CACHE_NAME = 'KongoVibe;
+const APP_SHELL = [
   './',
   './index.html',
-  './css/style.css',
-  './js/app.js',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  './manifest.json'
 ];
 
-// 1. Phase d'installation (Mise en cache des ressources de base)
-self.addEventListener('install', event => {
+// Installation : on met en cache les fichiers essentiels
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Mise en cache des ressources');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
+  self.skipWaiting();
 });
 
-// 2. Phase d'activation (Nettoyage des anciens caches)
-self.addEventListener('activate', event => {
+// Activation : on supprime les anciens caches
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            console.log('Suppression de l\'ancien cache', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      )
+    )
   );
+  self.clients.claim();
 });
 
-// 3. Phase de fetch (Stratégie de Cache: Cache first, Network fallback)
-self.addEventListener('fetch', event => {
+// Stratégie : réseau d'abord, cache en secours (utile en connexion lente/instable)
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Retourne la ressource si elle est dans le cache
-        return response || fetch(event.request);
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
       })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
 });
-
