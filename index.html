@@ -2,3500 +2,578 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#070b14">
-<meta name="description" content="Plateforme sociale nouvelle génération : messages, vidéos, appels, statuts et communautés.">
-<title>KongoVibe — Social Experience</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Aura — Une seule aura pour communiquer, découvrir et créer</title>
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#07060c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aura">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* =========================================================
-   KONGOVIBE — DESIGN SYSTEM
-========================================================= */
-
-:root{
-    --bg:#05070d;
-    --bg2:#0a0f1a;
-    --card:#0d1422;
-    --card2:#111b2b;
-    --border:rgba(255,255,255,.09);
-    --text:#f5f7fb;
-    --muted:#8792a6;
-    --accent:#d49b28;
-    --accent2:#ffcf63;
-    --danger:#ff4d67;
-    --success:#35d07f;
-    --blue:#4f8cff;
-    --shadow:0 20px 60px rgba(0,0,0,.4);
-    --radius:22px;
-}
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-html,body{
-    width:100%;
+  :root{
+    --bg-void: #07060c;
+    --bg-panel: #100e1c;
+    --bg-panel-2: #171429;
+    --violet: #6C3CE0;
+    --cyan: #00E5C7;
+    --magenta: #FF2E9A;
+    --text-hi: #F3F1FA;
+    --text-mid: #A9A4C0;
+    --text-low: #6B6684;
+    --line: rgba(255,255,255,0.07);
+    --grad-aura: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 55%, var(--magenta) 100%);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
     height:100%;
-    overflow:hidden;
-}
-
-body{
-    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    background:
-        radial-gradient(circle at 20% 10%,rgba(212,155,40,.08),transparent 30%),
-        radial-gradient(circle at 80% 80%,rgba(79,140,255,.06),transparent 30%),
-        var(--bg);
-    color:var(--text);
-}
-
-/* =========================================================
-   APP
-========================================================= */
-
-.app{
-    width:100%;
-    height:100vh;
-    display:flex;
-    position:relative;
-}
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.sidebar{
-    width:245px;
-    height:100%;
-    padding:22px 15px;
-    border-right:1px solid var(--border);
-    background:rgba(5,7,13,.82);
-    backdrop-filter:blur(25px);
-    display:flex;
-    flex-direction:column;
-    z-index:20;
-}
-
-.logo{
+    background: var(--bg-void);
+    color: var(--text-hi);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+  }
+  body{
     display:flex;
     align-items:center;
-    gap:12px;
-    margin-bottom:35px;
-    padding:0 8px;
-}
-
-.logo-symbol{
-    width:44px;
-    height:44px;
-    border-radius:15px;
-    background:linear-gradient(135deg,var(--accent),#f2c45e);
-    color:#101010;
-    display:grid;
-    place-items:center;
-    font-weight:900;
-    font-size:22px;
-    box-shadow:0 8px 30px rgba(212,155,40,.25);
-}
-
-.logo-text{
-    font-size:19px;
-    font-weight:800;
-    letter-spacing:.4px;
-}
-
-.logo-text span{
-    color:var(--accent2);
-}
-
-.nav{
-    display:flex;
-    flex-direction:column;
-    gap:7px;
-}
-
-.nav-btn{
-    border:0;
-    background:transparent;
-    color:var(--muted);
-    width:100%;
-    padding:13px 14px;
-    border-radius:15px;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:14px;
-    font-size:14px;
-    text-align:left;
-    transition:.2s;
-}
-
-.nav-btn:hover{
-    background:rgba(255,255,255,.05);
-    color:white;
-}
-
-.nav-btn.active{
-    background:linear-gradient(
-        90deg,
-        rgba(212,155,40,.18),
-        rgba(212,155,40,.04)
-    );
-    color:var(--accent2);
-}
-
-.nav-icon{
-    width:22px;
-    text-align:center;
-    font-size:18px;
-}
-
-.sidebar-bottom{
-    margin-top:auto;
-}
-
-.profile-mini{
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:18px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-
-.avatar{
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    object-fit:cover;
-    background:linear-gradient(135deg,#292f3d,#131824);
-}
-
-.profile-mini strong{
-    font-size:13px;
-}
-
-.profile-mini small{
-    display:block;
-    color:var(--muted);
-    margin-top:3px;
-}
-
-/* =========================================================
-   MAIN
-========================================================= */
-
-.main{
-    flex:1;
-    height:100%;
-    min-width:0;
-    position:relative;
-    display:flex;
-    flex-direction:column;
-}
-
-.topbar{
-    height:74px;
-    border-bottom:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 25px;
-    background:rgba(5,7,13,.65);
-    backdrop-filter:blur(20px);
-    z-index:10;
-}
-
-.page-title{
-    font-size:20px;
-    font-weight:800;
-}
-
-.top-actions{
-    display:flex;
-    align-items:center;
-    gap:9px;
-}
-
-.icon-btn{
-    width:40px;
-    height:40px;
-    border:1px solid var(--border);
-    border-radius:13px;
-    background:var(--card);
-    color:white;
-    cursor:pointer;
-    transition:.2s;
-}
-
-.icon-btn:hover{
-    transform:translateY(-1px);
-    border-color:rgba(212,155,40,.35);
-}
-
-/* =========================================================
-   CONTENT
-========================================================= */
-
-.content{
-    flex:1;
-    overflow:auto;
-    padding:25px;
-}
-
-.page{
-    display:none;
-    max-width:1200px;
-    margin:auto;
-    animation:pageIn .25s ease;
-}
-
-.page.active{
-    display:block;
-}
-
-@keyframes pageIn{
-    from{
-        opacity:0;
-        transform:translateY(7px);
-    }
-    to{
-        opacity:1;
-        transform:none;
-    }
-}
-
-/* =========================================================
-   HOME
-========================================================= */
-
-.hero{
-    min-height:210px;
-    padding:30px;
-    border:1px solid var(--border);
-    border-radius:28px;
-    background:
-        radial-gradient(circle at 85% 20%,rgba(212,155,40,.2),transparent 35%),
-        linear-gradient(135deg,#111a29,#090e17);
-    position:relative;
-    overflow:hidden;
-    margin-bottom:22px;
-}
-
-.hero h1{
-    font-size:32px;
-    max-width:600px;
-}
-
-.hero p{
-    color:var(--muted);
-    margin-top:10px;
-    max-width:600px;
-    line-height:1.6;
-}
-
-.hero-buttons{
-    display:flex;
-    gap:10px;
-    margin-top:22px;
-}
-
-.primary{
-    border:0;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:#101010;
-    padding:12px 18px;
-    border-radius:13px;
-    font-weight:800;
-    cursor:pointer;
-}
-
-.secondary{
-    border:1px solid var(--border);
-    background:rgba(255,255,255,.04);
-    color:white;
-    padding:12px 18px;
-    border-radius:13px;
-    font-weight:700;
-    cursor:pointer;
-}
-
-/* =========================================================
-   SECTION
-========================================================= */
-
-.section-title{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin:25px 0 13px;
-}
-
-.section-title h2{
-    font-size:18px;
-}
-
-.section-title span{
-    color:var(--muted);
-    font-size:12px;
-}
-
-/* =========================================================
-   STORIES
-========================================================= */
-
-.stories{
-    display:flex;
-    gap:13px;
-    overflow-x:auto;
-    padding-bottom:5px;
-}
-
-.story{
-    min-width:85px;
-    cursor:pointer;
-    text-align:center;
-}
-
-.story-ring{
-    width:68px;
-    height:68px;
-    padding:3px;
-    border-radius:50%;
-    margin:auto;
-    background:linear-gradient(135deg,var(--accent),#ff5c8a,var(--blue));
-}
-
-.story-inner{
-    width:100%;
-    height:100%;
-    border-radius:50%;
-    border:3px solid var(--bg);
-    object-fit:cover;
-}
-
-.story-name{
-    font-size:11px;
-    margin-top:7px;
-    color:#cbd2df;
-    overflow:hidden;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-}
-
-/* =========================================================
-   FEED
-========================================================= */
-
-.feed{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 310px;
-    gap:20px;
-}
-
-.post{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:17px;
-    margin-bottom:16px;
-}
-
-.post-head{
-    display:flex;
-    align-items:center;
-    gap:11px;
-}
-
-.post-head-info{
-    flex:1;
-}
-
-.post-head-info strong{
-    font-size:14px;
-}
-
-.post-head-info small{
-    display:block;
-    color:var(--muted);
-    margin-top:3px;
-}
-
-.post-text{
-    margin:15px 0;
-    line-height:1.55;
-    color:#dce2ed;
-}
-
-.post-media{
-    width:100%;
-    max-height:480px;
-    object-fit:cover;
-    border-radius:18px;
-    background:#05070d;
-}
-
-.post-actions{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-}
-
-.post-action{
-    border:0;
-    background:transparent;
-    color:var(--muted);
-    padding:8px 10px;
-    cursor:pointer;
-    border-radius:10px;
-}
-
-.post-action:hover{
-    background:rgba(255,255,255,.05);
-    color:white;
-}
-
-.post-action.liked{
-    color:#ff5d76;
-}
-
-/* =========================================================
-   TRENDING
-========================================================= */
-
-.trending-card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:18px;
-    position:sticky;
-    top:0;
-}
-
-.trend{
-    padding:13px 0;
-    border-bottom:1px solid var(--border);
-}
-
-.trend:last-child{
-    border-bottom:0;
-}
-
-.trend small{
-    color:var(--muted);
-}
-
-.trend strong{
-    display:block;
-    margin-top:4px;
-}
-
-/* =========================================================
-   MESSAGES
-========================================================= */
-
-.messages-layout{
-    height:calc(100vh - 125px);
-    display:grid;
-    grid-template-columns:320px 1fr;
-    border:1px solid var(--border);
-    border-radius:22px;
-    overflow:hidden;
-    background:var(--card);
-}
-
-.conversations{
-    border-right:1px solid var(--border);
-    overflow:auto;
-}
-
-.search{
-    margin:15px;
-    width:calc(100% - 30px);
-    border:1px solid var(--border);
-    background:#080d17;
-    color:white;
-    border-radius:12px;
-    padding:11px 13px;
-    outline:none;
-}
-
-.conversation{
-    display:flex;
-    gap:11px;
-    padding:13px 15px;
-    cursor:pointer;
-    border-left:3px solid transparent;
-}
-
-.conversation:hover,
-.conversation.active{
-    background:rgba(255,255,255,.045);
-    border-left-color:var(--accent);
-}
-
-.conversation-info{
-    flex:1;
-    min-width:0;
-}
-
-.conversation-info strong{
-    font-size:13px;
-}
-
-.conversation-info p{
-    color:var(--muted);
-    font-size:12px;
-    margin-top:4px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-.chat{
-    display:flex;
-    flex-direction:column;
-    min-width:0;
-}
-
-.chat-header{
-    height:68px;
-    padding:10px 16px;
-    display:flex;
-    align-items:center;
-    gap:11px;
-    border-bottom:1px solid var(--border);
-}
-
-.chat-header-info{
-    flex:1;
-}
-
-.chat-header-info strong{
-    font-size:14px;
-}
-
-.chat-header-info small{
-    display:block;
-    color:var(--success);
-    margin-top:3px;
-}
-
-.chat-actions{
-    display:flex;
-    gap:6px;
-}
-
-.chat-body{
-    flex:1;
-    overflow:auto;
-    padding:20px;
-    display:flex;
-    flex-direction:column;
-    gap:9px;
-}
-
-.message{
-    max-width:70%;
-    padding:10px 13px;
-    border-radius:17px;
-    font-size:13px;
-    line-height:1.45;
-}
-
-.message.me{
-    align-self:flex-end;
-    background:linear-gradient(135deg,#9c701f,#d49b28);
-    color:#111;
-    border-bottom-right-radius:5px;
-}
-
-.message.other{
-    align-self:flex-start;
-    background:#172131;
-    border-bottom-left-radius:5px;
-}
-
-.message-time{
-    font-size:9px;
-    opacity:.55;
-    margin-top:4px;
-    text-align:right;
-}
-
-.chat-input{
-    border-top:1px solid var(--border);
-    padding:12px;
-    display:flex;
-    gap:8px;
-}
-
-.chat-input input{
-    flex:1;
-    border:1px solid var(--border);
-    border-radius:13px;
-    background:#080d17;
-    color:white;
-    padding:12px;
-    outline:none;
-}
-
-/* =========================================================
-   SHORT VIDEOS
-========================================================= */
-
-.video-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:14px;
-}
-
-.video-card{
-    height:430px;
-    border-radius:22px;
-    overflow:hidden;
-    position:relative;
-    background:#080b12;
-    cursor:pointer;
-}
-
-.video-card video,
-.video-card img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-.video-overlay{
-    position:absolute;
-    inset:0;
-    background:linear-gradient(
-        transparent 45%,
-        rgba(0,0,0,.85)
-    );
-    padding:15px;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-end;
-}
-
-.video-overlay strong{
-    font-size:14px;
-}
-
-.video-overlay p{
-    font-size:12px;
-    color:#d6dce7;
-    margin-top:5px;
-}
-
-.video-actions{
-    position:absolute;
-    right:10px;
-    bottom:20px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-}
-
-.video-action{
-    width:40px;
-    height:40px;
-    border:0;
-    border-radius:50%;
-    background:rgba(0,0,0,.55);
-    color:white;
-    cursor:pointer;
-}
-
-/* =========================================================
-   CREATE
-========================================================= */
-
-.create-box{
-    max-width:760px;
-    margin:auto;
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:25px;
-    padding:20px;
-}
-
-.create-tabs{
-    display:flex;
-    gap:8px;
-    margin-bottom:20px;
-}
-
-.create-tab{
-    flex:1;
-    border:1px solid var(--border);
-    background:transparent;
-    color:var(--muted);
-    padding:12px;
-    border-radius:12px;
-    cursor:pointer;
-}
-
-.create-tab.active{
-    background:rgba(212,155,40,.12);
-    color:var(--accent2);
-    border-color:rgba(212,155,40,.3);
-}
-
-textarea{
-    width:100%;
-    min-height:170px;
-    resize:vertical;
-    background:#080d17;
-    color:white;
-    border:1px solid var(--border);
-    border-radius:18px;
-    padding:16px;
-    outline:none;
-    font-family:inherit;
-}
-
-.upload-area{
-    border:1px dashed rgba(255,255,255,.2);
-    border-radius:18px;
-    padding:30px;
-    text-align:center;
-    margin:15px 0;
-    cursor:pointer;
-    color:var(--muted);
-}
-
-.upload-area:hover{
-    border-color:var(--accent);
-}
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-.profile-cover{
-    height:210px;
-    border-radius:25px;
-    background:
-        radial-gradient(circle at 20% 20%,rgba(212,155,40,.35),transparent 35%),
-        linear-gradient(135deg,#151f30,#080c14);
-    position:relative;
-}
-
-.profile-main{
-    padding:0 25px;
-}
-
-.profile-avatar{
-    width:105px;
-    height:105px;
-    border-radius:50%;
-    border:5px solid var(--bg);
-    margin-top:-50px;
-    position:relative;
-    object-fit:cover;
-}
-
-.profile-info{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:20px;
-}
-
-.profile-info h1{
-    font-size:25px;
-    margin-top:7px;
-}
-
-.profile-info p{
-    color:var(--muted);
-    margin-top:5px;
-}
-
-.stats{
-    display:flex;
-    gap:25px;
-    margin-top:18px;
-}
-
-.stat strong{
-    display:block;
-    font-size:18px;
-}
-
-.stat span{
-    color:var(--muted);
-    font-size:11px;
-}
-
-/* =========================================================
-   COMMUNITIES
-========================================================= */
-
-.community-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:15px;
-}
-
-.community{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:20px;
-    padding:18px;
-}
-
-.community-icon{
-    width:50px;
-    height:50px;
-    border-radius:15px;
-    background:rgba(212,155,40,.12);
-    display:grid;
-    place-items:center;
-    font-size:24px;
-    margin-bottom:14px;
-}
-
-.community p{
-    color:var(--muted);
-    font-size:12px;
-    margin:7px 0 15px;
-}
-
-/* =========================================================
-   NOTIFICATIONS
-========================================================= */
-
-.notification{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:15px;
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:17px;
-    margin-bottom:10px;
-}
-
-.notification-text{
-    flex:1;
-}
-
-.notification-text strong{
-    font-size:13px;
-}
-
-.notification-text p{
-    color:var(--muted);
-    font-size:12px;
-    margin-top:4px;
-}
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-.settings{
-    display:grid;
-    grid-template-columns:230px 1fr;
-    gap:18px;
-}
-
-.settings-menu{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:20px;
-    padding:10px;
-}
-
-.setting-menu-btn{
-    width:100%;
-    background:transparent;
-    color:var(--muted);
-    border:0;
-    padding:12px;
-    text-align:left;
-    border-radius:11px;
-    cursor:pointer;
-}
-
-.setting-menu-btn:hover,
-.setting-menu-btn.active{
-    background:rgba(255,255,255,.05);
-    color:white;
-}
-
-.settings-panel{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:20px;
-    padding:22px;
-}
-
-.setting-row{
-    padding:16px 0;
-    border-bottom:1px solid var(--border);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:20px;
-}
-
-.setting-row:last-child{
-    border-bottom:0;
-}
-
-.setting-row p{
-    color:var(--muted);
-    font-size:12px;
-    margin-top:4px;
-}
-
-/* =========================================================
-   SWITCH
-========================================================= */
-
-.switch{
-    width:45px;
-    height:25px;
-    background:#263043;
-    border-radius:20px;
-    position:relative;
-    cursor:pointer;
-}
-
-.switch::after{
-    content:"";
-    position:absolute;
-    width:19px;
-    height:19px;
-    background:white;
-    border-radius:50%;
-    top:3px;
-    left:3px;
-    transition:.2s;
-}
-
-.switch.on{
-    background:var(--accent);
-}
-
-.switch.on::after{
-    left:23px;
-}
-
-/* =========================================================
-   MODAL
-========================================================= */
-
-.modal{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.72);
-    backdrop-filter:blur(10px);
-    display:none;
-    place-items:center;
-    z-index:100;
-    padding:20px;
-}
-
-.modal.show{
-    display:grid;
-}
-
-.modal-box{
-    width:min(500px,100%);
-    background:#0d1422;
-    border:1px solid var(--border);
-    border-radius:25px;
-    padding:22px;
-    box-shadow:var(--shadow);
-}
-
-.modal-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
-}
-
-.close{
-    border:0;
-    background:transparent;
-    color:white;
-    font-size:22px;
-    cursor:pointer;
-}
-
-/* =========================================================
-   CALL MODAL
-========================================================= */
-
-.call-screen{
-    text-align:center;
-    padding:30px;
-}
-
-.call-avatar{
-    width:115px;
-    height:115px;
-    border-radius:50%;
-    margin:20px auto;
-    object-fit:cover;
-    border:4px solid rgba(212,155,40,.4);
-}
-
-.call-status{
-    color:var(--muted);
-}
-
-.call-controls{
-    display:flex;
     justify-content:center;
-    gap:12px;
-    margin-top:30px;
-}
-
-.call-btn{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    border:1px solid var(--border);
-    background:#172131;
-    color:white;
-    cursor:pointer;
-}
-
-.call-btn.end{
-    background:var(--danger);
-}
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-.toast{
+    min-height:100vh;
+    padding:32px 16px;
+    position:relative;
+  }
+  /* Ambient glow background */
+  body::before, body::after{
+    content:'';
     position:fixed;
-    bottom:25px;
-    left:50%;
-    transform:translate(-50%,20px);
-    background:#151e2d;
-    border:1px solid var(--border);
-    color:white;
-    padding:12px 18px;
-    border-radius:13px;
-    opacity:0;
-    pointer-events:none;
-    transition:.3s;
-    z-index:200;
-}
+    width:520px; height:520px;
+    border-radius:50%;
+    filter: blur(120px);
+    opacity:0.28;
+    z-index:0;
+    animation: drift 14s ease-in-out infinite alternate;
+  }
+  body::before{ background: var(--violet); top:-10%; left:-15%; }
+  body::after{ background: var(--cyan); bottom:-10%; right:-15%; animation-delay:3s;}
+  @keyframes drift{
+    from{ transform: translate(0,0) scale(1); }
+    to{ transform: translate(40px,30px) scale(1.15); }
+  }
 
-.toast.show{
-    opacity:1;
-    transform:translate(-50%,0);
-}
+  .intro{
+    position:relative; z-index:1;
+    max-width:360px;
+    text-align:center;
+    margin-bottom:26px;
+  }
+  .intro .mark{
+    display:inline-flex; align-items:center; gap:9px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:22px; letter-spacing:0.5px;
+  }
+  .mark .orb{
+    width:14px;height:14px;border-radius:50%;
+    background: var(--grad-aura);
+    box-shadow: 0 0 18px 2px rgba(108,60,224,0.7);
+  }
+  .intro p{
+    margin-top:10px;
+    color: var(--text-mid);
+    font-size:13px;
+    line-height:1.5;
+  }
 
-/* =========================================================
-   MOBILE
-========================================================= */
+  /* ---------- PHONE FRAME ---------- */
+  .device{
+    position:relative; z-index:1;
+    width:390px;
+    height:820px;
+    background: linear-gradient(180deg, #16131f, #0b0a12);
+    border-radius:48px;
+    padding:14px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 40px 100px -20px rgba(0,0,0,0.8),
+      0 0 60px -10px rgba(108,60,224,0.35);
+  }
+  .screen{
+    position:relative;
+    width:100%; height:100%;
+    background: var(--bg-void);
+    border-radius:36px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    width:110px; height:22px; background:#000; border-radius:14px;
+    z-index:20;
+  }
 
-.mobile-nav{
-    display:none;
-}
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    padding:38px 20px 14px;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0;
+  }
+  .topbar .brand{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:19px;
+    display:flex; align-items:center; gap:7px;
+  }
+  .topbar .brand .orb{
+    width:10px;height:10px;border-radius:50%;
+    background: var(--grad-aura);
+  }
+  .topbar .icons{ display:flex; gap:14px; }
+  .icon-btn{
+    width:34px; height:34px; border-radius:12px;
+    background: var(--bg-panel);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--text-mid);
+    cursor:pointer;
+  }
 
-@media(max-width:950px){
+  /* ---------- SCREENS CONTAINER ---------- */
+  .views{ flex:1; overflow-y:auto; padding-bottom:8px; }
+  .views::-webkit-scrollbar{ display:none; }
+  .view{ display:none; padding:4px 20px 20px; animation: fadeIn .35s ease; }
+  .view.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
 
-    .sidebar{
-        display:none;
-    }
+  .section-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase;
+    color: var(--text-low);
+    margin: 18px 0 10px;
+  }
+  .section-label:first-child{ margin-top:2px; }
 
-    .content{
-        padding:15px;
-        padding-bottom:80px;
-    }
+  /* ---- Stories / statuses rail ---- */
+  .rail{ display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+  .rail::-webkit-scrollbar{ display:none; }
+  .story{ flex-shrink:0; width:62px; text-align:center; }
+  .aura-ring{
+    width:58px; height:58px; border-radius:50%;
+    background: var(--grad-aura);
+    padding:2.5px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .aura-ring.dim{ background: var(--bg-panel-2); }
+  .aura-ring img, .aura-ring .ph{
+    width:100%; height:100%; border-radius:50%;
+    background: var(--bg-panel);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+  }
+  .story span{ display:block; font-size:10.5px; color:var(--text-mid); margin-top:6px; }
 
-    .topbar{
-        padding:0 15px;
-    }
+  /* ---- Feed cards ---- */
+  .card{
+    background: var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:16px;
+    margin-bottom:12px;
+  }
+  .card-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .avatar{
+    width:36px;height:36px;border-radius:50%;
+    background: var(--bg-panel-2);
+    display:flex;align-items:center;justify-content:center; font-size:15px;
+    border:1px solid var(--line);
+  }
+  .who{ font-size:13.5px; font-weight:600; }
+  .meta{ font-size:11px; color:var(--text-low); }
+  .card p.body{ font-size:13.5px; color:var(--text-mid); line-height:1.5; margin-bottom:10px;}
+  .media-block{
+    height:150px; border-radius:14px;
+    background: linear-gradient(135deg, rgba(0,229,199,0.18), rgba(255,46,154,0.18));
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-low); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    font-family:'JetBrains Mono', monospace;
+    margin-bottom:10px;
+    border:1px dashed var(--line);
+  }
+  .actions{ display:flex; gap:16px; }
+  .act{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-mid); }
 
-    .feed{
-        grid-template-columns:1fr;
-    }
+  /* ---- VIBE (short videos) ---- */
+  .vibe-stack{ display:flex; flex-direction:column; gap:14px; }
+  .vibe-card{
+    position:relative;
+    height:520px;
+    border-radius:22px;
+    overflow:hidden;
+    background: linear-gradient(160deg, #1c1030, #06090f 60%);
+    border:1px solid var(--line);
+  }
+  .vibe-card::before{
+    content:''; position:absolute; inset:0;
+    background: radial-gradient(circle at 30% 20%, rgba(0,229,199,0.25), transparent 55%),
+                radial-gradient(circle at 80% 80%, rgba(255,46,154,0.25), transparent 55%);
+  }
+  .vibe-tag{
+    position:absolute; top:14px; left:14px;
+    font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px;
+    background: rgba(0,0,0,0.4); padding:5px 10px; border-radius:20px;
+    border:1px solid var(--line);
+  }
+  .vibe-side{
+    position:absolute; right:12px; bottom:90px;
+    display:flex; flex-direction:column; gap:18px; align-items:center;
+  }
+  .vibe-side .s-avatar{
+    width:42px;height:42px;border-radius:50%;
+    background: var(--grad-aura); padding:2px;
+  }
+  .vibe-side .s-avatar div{ width:100%;height:100%;border-radius:50%; background:var(--bg-panel); display:flex;align-items:center;justify-content:center; font-size:16px;}
+  .vibe-side .s-icon{ text-align:center; font-size:19px; color:var(--text-hi); }
+  .vibe-side .s-icon span{ display:block; font-size:10px; color:var(--text-mid); margin-top:3px; font-family:'JetBrains Mono',monospace;}
+  .vibe-caption{
+    position:absolute; left:16px; right:70px; bottom:20px;
+  }
+  .vibe-caption .who{ font-size:13.5px; margin-bottom:5px;}
+  .vibe-caption p{ font-size:12.5px; color:var(--text-mid); line-height:1.4;}
+  .vibe-caption .tags{ color:var(--cyan); }
 
-    .trending-card{
-        display:none;
-    }
+  /* ---- MESSAGES ---- */
+  .conv{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 4px; border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .conv .avatar{ width:46px; height:46px; font-size:18px; position:relative; flex-shrink:0;}
+  .dot-online{
+    position:absolute; bottom:-1px; right:-1px; width:11px; height:11px;
+    border-radius:50%; background: var(--cyan); border:2px solid var(--bg-void);
+  }
+  .conv-info{ flex:1; min-width:0; }
+  .conv-top{ display:flex; justify-content:space-between; }
+  .conv-top .who{ font-size:13.5px; }
+  .conv-top .time{ font-size:10.5px; color:var(--text-low); }
+  .conv-sub{ display:flex; justify-content:space-between; align-items:center; margin-top:2px;}
+  .conv-sub p{ font-size:12px; color:var(--text-mid); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:230px;}
+  .unread{
+    background: var(--grad-aura); color:#07060c; font-weight:700;
+    font-size:10px; width:18px; height:18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .typing{ color: var(--cyan); }
 
-    .video-grid{
-        grid-template-columns:repeat(2,1fr);
-    }
+  /* ---- CREATE ---- */
+  .create-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .create-tile{
+    background: var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px 14px;
+    display:flex; flex-direction:column; gap:24px;
+  }
+  .create-tile .ic{
+    width:38px;height:38px;border-radius:12px;
+    background: var(--grad-aura);
+    display:flex;align-items:center;justify-content:center; font-size:17px;
+  }
+  .create-tile b{ font-size:13.5px; }
+  .create-tile span{ font-size:11px; color:var(--text-mid); }
+  .create-tile.wide{ grid-column: span 2; flex-direction:row; align-items:center; justify-content:space-between;}
 
-    .community-grid{
-        grid-template-columns:1fr 1fr;
-    }
+  /* ---- PROFILE ---- */
+  .profile-head{ text-align:center; padding-top:6px;}
+  .p-avatar{
+    width:84px;height:84px;border-radius:50%;
+    background: var(--grad-aura); padding:3px; margin:0 auto 10px;
+  }
+  .p-avatar div{ width:100%;height:100%;border-radius:50%; background:var(--bg-panel); display:flex;align-items:center;justify-content:center; font-size:30px;}
+  .p-name{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:17px; }
+  .p-handle{ font-size:12px; color:var(--text-low); margin-top:2px; }
+  .p-bio{ font-size:12.5px; color:var(--text-mid); margin:10px auto 0; max-width:280px; line-height:1.5;}
+  .stat-row{ display:flex; justify-content:center; gap:26px; margin-top:16px; }
+  .stat b{ display:block; font-family:'Space Grotesk',sans-serif; font-size:15px; }
+  .stat span{ font-size:10.5px; color:var(--text-low); }
+  .p-actions{ display:flex; gap:10px; margin-top:16px; }
+  .btn{
+    flex:1; text-align:center; padding:10px; border-radius:12px;
+    font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .btn.primary{ background: var(--grad-aura); color:#07060c; }
+  .btn.ghost{ background: var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); }
+  .tab-row{ display:flex; gap:8px; margin:22px 0 4px; border-bottom:1px solid var(--line); }
+  .tab{ padding:9px 4px; font-size:12px; color:var(--text-low); border-bottom:2px solid transparent; }
+  .tab.on{ color:var(--text-hi); border-color: var(--cyan); }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:12px;}
+  .grid3 .cell{
+    aspect-ratio:9/14; border-radius:10px;
+    background: linear-gradient(160deg, rgba(108,60,224,0.25), rgba(0,229,199,0.15));
+    border:1px solid var(--line);
+  }
 
-    .settings{
-        grid-template-columns:1fr;
-    }
+  /* ---------- BOTTOM NAV ---------- */
+  .navbar{
+    flex-shrink:0;
+    display:flex; justify-content:space-around; align-items:center;
+    padding:10px 8px 16px;
+    border-top:1px solid var(--line);
+    background: linear-gradient(180deg, transparent, rgba(16,14,28,0.6));
+  }
+  .nav-item{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    color: var(--text-low);
+    cursor:pointer;
+    font-size:9.5px;
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.5px;
+    width:56px;
+    position:relative;
+  }
+  .nav-item .ic-wrap{
+    width:38px; height:38px; border-radius:13px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px;
+    transition: all .25s ease;
+  }
+  .nav-item.active{ color: var(--text-hi); }
+  .nav-item.active .ic-wrap{
+    background: var(--grad-aura);
+    box-shadow: 0 0 16px rgba(108,60,224,0.6);
+  }
+  .nav-item.create .ic-wrap{
+    background: var(--bg-panel-2); border:1px solid var(--line);
+  }
+  .nav-item.create.active .ic-wrap{ background: var(--grad-aura); }
 
-    .mobile-nav{
-        position:fixed;
-        bottom:0;
-        left:0;
-        right:0;
-        height:65px;
-        background:rgba(5,7,13,.94);
-        backdrop-filter:blur(20px);
-        border-top:1px solid var(--border);
-        display:flex;
-        justify-content:space-around;
-        align-items:center;
-        z-index:50;
-    }
-
-    .mobile-nav button{
-        background:transparent;
-        border:0;
-        color:var(--muted);
-        font-size:20px;
-        cursor:pointer;
-    }
-
-    .mobile-nav button.active{
-        color:var(--accent2);
-    }
-}
-
-@media(max-width:650px){
-
-    .hero h1{
-        font-size:25px;
-    }
-
-    .video-grid{
-        grid-template-columns:1fr 1fr;
-    }
-
-    .video-card{
-        height:310px;
-    }
-
-    .messages-layout{
-        grid-template-columns:1fr;
-    }
-
-    .conversations{
-        display:none;
-    }
-
-    .community-grid{
-        grid-template-columns:1fr;
-    }
-
-    .profile-info{
-        flex-direction:column;
-        align-items:flex-start;
-    }
-}
+  @media (max-width:420px){
+    .device{ width:100%; max-width:390px; height:88vh; }
+  }
 </style>
 </head>
-
 <body>
 
-<div class="app">
-
-<!-- ======================================================
-     SIDEBAR
-====================================================== -->
-
-<aside class="sidebar">
-
-    <div class="logo">
-        <div class="logo-symbol">K</div>
-        <div class="logo-text">Kongo<span>Vibe</span></div>
-    </div>
-
-    <nav class="nav">
-
-        <button class="nav-btn active" data-page="home">
-            <span class="nav-icon">⌂</span>
-            Accueil
-        </button>
-
-        <button class="nav-btn" data-page="videos">
-            <span class="nav-icon">▶</span>
-            Vibe
-        </button>
-
-        <button class="nav-btn" data-page="messages">
-            <span class="nav-icon">◌</span>
-            Messages
-        </button>
-
-        <button class="nav-btn" data-page="create">
-            <span class="nav-icon">＋</span>
-            Créer
-        </button>
-
-        <button class="nav-btn" data-page="communities">
-            <span class="nav-icon">◎</span>
-            Communautés
-        </button>
-
-        <button class="nav-btn" data-page="notifications">
-            <span class="nav-icon">♢</span>
-            Notifications
-        </button>
-
-        <button class="nav-btn" data-page="profile">
-            <span class="nav-icon">◉</span>
-            Profil
-        </button>
-
-        <button class="nav-btn" data-page="settings">
-            <span class="nav-icon">⚙</span>
-            Paramètres
-        </button>
-
-    </nav>
-
-    <div class="sidebar-bottom">
-
-        <div class="profile-mini">
-            <img
-                class="avatar"
-                src="https://i.pravatar.cc/150?img=12"
-                alt="Profil"
-            >
-
-            <div>
-                <strong>Manassé</strong>
-                <small>@manasse</small>
-            </div>
-        </div>
-
-    </div>
-
-</aside>
-
-
-<!-- ======================================================
-     MAIN
-====================================================== -->
-
-<main class="main">
-
-<header class="topbar">
-
-    <div class="page-title" id="pageTitle">
-        Accueil
-    </div>
-
-    <div class="top-actions">
-
-        <button class="icon-btn" onclick="openSearch()">
-            ⌕
-        </button>
-
-        <button
-            class="icon-btn"
-            onclick="showPage('notifications')"
-        >
-            ♢
-        </button>
-
-        <button
-            class="icon-btn"
-            onclick="showToast('Synchronisation terminée')"
-        >
-            ↻
-        </button>
-
-    </div>
-
-</header>
-
-
-<div class="content">
-
-<!-- ======================================================
-     HOME
-====================================================== -->
-
-<section class="page active" id="home">
-
-    <div class="hero">
-
-        <h1>
-            Bienvenue dans une nouvelle façon de communiquer.
-        </h1>
-
-        <p>
-            Discute, appelle, découvre des vidéos, partage tes
-            moments et rejoins des communautés sans quitter
-            ton espace social.
-        </p>
-
-        <div class="hero-buttons">
-
-            <button
-                class="primary"
-                onclick="showPage('create')"
-            >
-                ＋ Créer
-            </button>
-
-            <button
-                class="secondary"
-                onclick="showPage('videos')"
-            >
-                ▶ Découvrir
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <div class="section-title">
-        <h2>Statuts</h2>
-        <span>Voir tout</span>
-    </div>
-
-    <div class="stories">
-
-        <div class="story" onclick="openStory('Manassé')">
-            <div class="story-ring">
-                <img
-                    class="story-inner"
-                    src="https://i.pravatar.cc/150?img=12"
-                >
-            </div>
-            <div class="story-name">Ton statut</div>
-        </div>
-
-        <div class="story" onclick="openStory('Sarah')">
-            <div class="story-ring">
-                <img
-                    class="story-inner"
-                    src="https://i.pravatar.cc/150?img=47"
-                >
-            </div>
-            <div class="story-name">Sarah</div>
-        </div>
-
-        <div class="story" onclick="openStory('Kevin')">
-            <div class="story-ring">
-                <img
-                    class="story-inner"
-                    src="https://i.pravatar.cc/150?img=11"
-                >
-            </div>
-            <div class="story-name">Kevin</div>
-        </div>
-
-        <div class="story" onclick="openStory('Grace')">
-            <div class="story-ring">
-                <img
-                    class="story-inner"
-                    src="https://i.pravatar.cc/150?img=32"
-                >
-            </div>
-            <div class="story-name">Grace</div>
-        </div>
-
-        <div class="story" onclick="openStory('David')">
-            <div class="story-ring">
-                <img
-                    class="story-inner"
-                    src="https://i.pravatar.cc/150?img=13"
-                >
-            </div>
-            <div class="story-name">David</div>
-        </div>
-
-    </div>
-
-
-    <div class="section-title">
-        <h2>Pour toi</h2>
-        <span>Personnalisé</span>
-    </div>
-
-
-    <div class="feed">
-
-        <div>
-
-            <article class="post">
-
-                <div class="post-head">
-
-                    <img
-                        class="avatar"
-                        src="https://i.pravatar.cc/150?img=11"
-                    >
-
-                    <div class="post-head-info">
-                        <strong>Kevin Tech</strong>
-                        <small>@kevintech · 12 min</small>
-                    </div>
-
-                    <button class="icon-btn">•••</button>
-
-                </div>
-
-                <p class="post-text">
-                    Construire quelque chose de nouveau commence
-                    toujours par une idée. 🚀
-                </p>
-
-                <img
-                    class="post-media"
-                    src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80"
-                >
-
-                <div class="post-actions">
-
-                    <button
-                        class="post-action"
-                        onclick="toggleLike(this)"
-                    >
-                        ♡ <span>124</span>
-                    </button>
-
-                    <button
-                        class="post-action"
-                        onclick="showToast('Commentaires ouverts')"
-                    >
-                        ◌ 38
-                    </button>
-
-                    <button
-                        class="post-action"
-                        onclick="showToast('Publication partagée')"
-                    >
-                        ↗ 12
-                    </button>
-
-                    <button
-                        class="post-action"
-                        onclick="showToast('Publication enregistrée')"
-                    >
-                        ♧
-                    </button>
-
-                </div>
-
-            </article>
-
-
-            <article class="post">
-
-                <div class="post-head">
-
-                    <img
-                        class="avatar"
-                        src="https://i.pravatar.cc/150?img=32"
-                    >
-
-                    <div class="post-head-info">
-                        <strong>Grace M.</strong>
-                        <small>@gracem · 34 min</small>
-                    </div>
-
-                </div>
-
-                <p class="post-text">
-                    La créativité n'a pas besoin de permission.
-                    ✨
-                </p>
-
-                <div class="post-actions">
-
-                    <button
-                        class="post-action"
-                        onclick="toggleLike(this)"
-                    >
-                        ♡ <span>86</span>
-                    </button>
-
-                    <button class="post-action">
-                        ◌ 19
-                    </button>
-
-                    <button class="post-action">
-                        ↗ 8
-                    </button>
-
-                </div>
-
-            </article>
-
-        </div>
-
-
-        <aside class="trending-card">
-
-            <div class="section-title">
-                <h2>Tendances</h2>
-            </div>
-
-            <div class="trend">
-                <small>#Technologie</small>
-                <strong>2,4K publications</strong>
-            </div>
-
-            <div class="trend">
-                <small>#Kinshasa</small>
-                <strong>18K publications</strong>
-            </div>
-
-            <div class="trend">
-                <small>#Robotique</small>
-                <strong>8,7K publications</strong>
-            </div>
-
-            <div class="trend">
-                <small>#KongoVibe</small>
-                <strong>32K publications</strong>
-            </div>
-
-        </aside>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     VIDEOS
-====================================================== -->
-
-<section class="page" id="videos">
-
-    <div class="section-title">
-
-        <div>
-            <h2>Vibe</h2>
-            <span>Découvre ce qui fait vibrer la communauté</span>
-        </div>
-
-        <button
-            class="primary"
-            onclick="showPage('create')"
-        >
-            ＋ Créer une vidéo
-        </button>
-
-    </div>
-
-
-    <div class="video-grid">
-
-        <div class="video-card">
-
-            <img
-                src="https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=800&q=80"
-            >
-
-            <div class="video-overlay">
-                <strong>@creativeworld</strong>
-                <p>
-                    Quand la créativité rencontre la technologie.
-                </p>
-            </div>
-
-            <div class="video-actions">
-
-                <button
-                    class="video-action"
-                    onclick="videoLike(this)"
-                >
-                    ♡
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Commentaires')"
-                >
-                    ◌
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Vidéo partagée')"
-                >
-                    ↗
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="video-card">
-
-            <img
-                src="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80"
-            >
-
-            <div class="video-overlay">
-                <strong>@cinema</strong>
-                <p>
-                    Une autre vision du monde.
-                </p>
-            </div>
-
-            <div class="video-actions">
-
-                <button
-                    class="video-action"
-                    onclick="videoLike(this)"
-                >
-                    ♡
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Commentaires')"
-                >
-                    ◌
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Vidéo partagée')"
-                >
-                    ↗
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="video-card">
-
-            <img
-                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80"
-            >
-
-            <div class="video-overlay">
-                <strong>@futurelab</strong>
-                <p>
-                    Le futur se construit aujourd'hui.
-                </p>
-            </div>
-
-            <div class="video-actions">
-
-                <button
-                    class="video-action"
-                    onclick="videoLike(this)"
-                >
-                    ♡
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Commentaires')"
-                >
-                    ◌
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Vidéo partagée')"
-                >
-                    ↗
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="video-card">
-
-            <img
-                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=800&q=80"
-            >
-
-            <div class="video-overlay">
-                <strong>@musiclife</strong>
-                <p>
-                    Le son est une autre manière de communiquer.
-                </p>
-            </div>
-
-            <div class="video-actions">
-
-                <button
-                    class="video-action"
-                    onclick="videoLike(this)"
-                >
-                    ♡
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Commentaires')"
-                >
-                    ◌
-                </button>
-
-                <button
-                    class="video-action"
-                    onclick="showToast('Vidéo partagée')"
-                >
-                    ↗
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     MESSAGES
-====================================================== -->
-
-<section class="page" id="messages">
-
-    <div class="messages-layout">
-
-        <aside class="conversations">
-
-            <input
-                class="search"
-                id="conversationSearch"
-                placeholder="Rechercher..."
-                oninput="filterConversations()"
-            >
-
-            <div
-                class="conversation active"
-                data-name="Sarah"
-                onclick="selectConversation('Sarah')"
-            >
-
-                <img
-                    class="avatar"
-                    src="https://i.pravatar.cc/150?img=47"
-                >
-
-                <div class="conversation-info">
-                    <strong>Sarah</strong>
-                    <p>Tu as vu cette vidéo ?</p>
-                </div>
-
-            </div>
-
-
-            <div
-                class="conversation"
-                data-name="Kevin"
-                onclick="selectConversation('Kevin')"
-            >
-
-                <img
-                    class="avatar"
-                    src="https://i.pravatar.cc/150?img=11"
-                >
-
-                <div class="conversation-info">
-                    <strong>Kevin</strong>
-                    <p>On parle du projet demain.</p>
-                </div>
-
-            </div>
-
-
-            <div
-                class="conversation"
-                data-name="Grace"
-                onclick="selectConversation('Grace')"
-            >
-
-                <img
-                    class="avatar"
-                    src="https://i.pravatar.cc/150?img=32"
-                >
-
-                <div class="conversation-info">
-                    <strong>Grace</strong>
-                    <p>Merci beaucoup !</p>
-                </div>
-
-            </div>
-
-
-            <div
-                class="conversation"
-                data-name="David"
-                onclick="selectConversation('David')"
-            >
-
-                <img
-                    class="avatar"
-                    src="https://i.pravatar.cc/150?img=13"
-                >
-
-                <div class="conversation-info">
-                    <strong>David</strong>
-                    <p>🔥🔥🔥</p>
-                </div>
-
-            </div>
-
-        </aside>
-
-
-        <div class="chat">
-
-            <header class="chat-header">
-
-                <img
-                    class="avatar"
-                    id="chatAvatar"
-                    src="https://i.pravatar.cc/150?img=47"
-                >
-
-                <div class="chat-header-info">
-
-                    <strong id="chatName">
-                        Sarah
-                    </strong>
-
-                    <small>
-                        En ligne
-                    </small>
-
-                </div>
-
-                <div class="chat-actions">
-
-                    <button
-                        class="icon-btn"
-                        onclick="startCall('audio')"
-                    >
-                        ☎
-                    </button>
-
-                    <button
-                        class="icon-btn"
-                        onclick="startCall('video')"
-                    >
-                        ▣
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <div class="chat-body" id="chatBody">
-
-                <div class="message other">
-
-                    Salut ! 👋
-
-                    <div class="message-time">
-                        17:23
-                    </div>
-
-                </div>
-
-                <div class="message me">
-
-                    Salut Sarah, ça va ?
-
-                    <div class="message-time">
-                        17:24 ✓✓
-                    </div>
-
-                </div>
-
-                <div class="message other">
-
-                    Très bien. Tu as vu la nouvelle vidéo ?
-
-                    <div class="message-time">
-                        17:25
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <form
-                class="chat-input"
-                onsubmit="sendMessage(event)"
-            >
-
-                <button
-                    type="button"
-                    class="icon-btn"
-                    onclick="showToast('Pièce jointe')"
-                >
-                    ＋
-                </button>
-
-                <input
-                    id="messageInput"
-                    placeholder="Écrire un message..."
-                    autocomplete="off"
-                >
-
-                <button
-                    type="button"
-                    class="icon-btn"
-                    onclick="showToast('Message vocal')"
-                >
-                    🎙
-                </button>
-
-                <button
-                    class="primary"
-                    type="submit"
-                >
-                    ➤
-                </button>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     CREATE
-====================================================== -->
-
-<section class="page" id="create">
-
-    <div class="create-box">
-
-        <div class="section-title">
-
-            <div>
-                <h2>Créer</h2>
-                <span>Partage quelque chose avec ta communauté</span>
-            </div>
-
-        </div>
-
-
-        <div class="create-tabs">
-
-            <button
-                class="create-tab active"
-                onclick="switchCreate('publication',this)"
-            >
-                Publication
-            </button>
-
-            <button
-                class="create-tab"
-                onclick="switchCreate('video',this)"
-            >
-                Vidéo
-            </button>
-
-            <button
-                class="create-tab"
-                onclick="switchCreate('status',this)"
-            >
-                Statut
-            </button>
-
-        </div>
-
-
-        <div id="createContent">
-
-            <textarea
-                id="postText"
-                placeholder="Qu'as-tu envie de partager ?"
-            ></textarea>
-
-            <div
-                class="upload-area"
-                onclick="fakeUpload()"
-            >
-                ＋<br>
-                Ajouter une photo, une vidéo ou un fichier
-            </div>
-
-            <button
-                class="primary"
-                onclick="publishContent()"
-            >
-                Publier
-            </button>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     COMMUNITIES
-====================================================== -->
-
-<section class="page" id="communities">
-
-    <div class="section-title">
-
-        <div>
-            <h2>Communautés</h2>
-            <span>Découvre des espaces qui t'intéressent</span>
-        </div>
-
-        <button
-            class="primary"
-            onclick="showToast('Création de communauté')"
-        >
-            ＋ Nouvelle communauté
-        </button>
-
-    </div>
-
-
-    <div class="community-grid">
-
-        <div class="community">
-
-            <div class="community-icon">
-                🤖
-            </div>
-
-            <h3>Robotique RDC</h3>
-
-            <p>
-                Passionnés de robotique, électronique et
-                automatisation.
-            </p>
-
-            <button
-                class="secondary"
-                onclick="joinCommunity(this)"
-            >
-                Rejoindre
-            </button>
-
-        </div>
-
-
-        <div class="community">
-
-            <div class="community-icon">
-                💻
-            </div>
-
-            <h3>Développeurs</h3>
-
-            <p>
-                Programmation, IA, web et nouvelles technologies.
-            </p>
-
-            <button
-                class="secondary"
-                onclick="joinCommunity(this)"
-            >
-                Rejoindre
-            </button>
-
-        </div>
-
-
-        <div class="community">
-
-            <div class="community-icon">
-                🎵
-            </div>
-
-            <h3>Musique</h3>
-
-            <p>
-                Artistes, producteurs et passionnés de musique.
-            </p>
-
-            <button
-                class="secondary"
-                onclick="joinCommunity(this)"
-            >
-                Rejoindre
-            </button>
-
-        </div>
-
-
-        <div class="community">
-
-            <div class="community-icon">
-                🎓
-            </div>
-
-            <h3>Étudiants</h3>
-
-            <p>
-                Discussions, entraide, études et projets.
-            </p>
-
-            <button
-                class="secondary"
-                onclick="joinCommunity(this)"
-            >
-                Rejoindre
-            </button>
-
-        </div>
-
-
-        <div class="community">
-
-            <div class="community-icon">
-                ⚽
-            </div>
-
-            <h3>Sport</h3>
-
-            <p>
-                Actualités, discussions et passion sportive.
-            </p>
-
-            <button
-                class="secondary"
-                onclick="joinCommunity(this)"
-            >
-                Rejoindre
-            </button>
-
-        </div>
-
-
-        <div class="community">
-
-            <div class="community-icon">
-                🌍
-            </div>
-
-            <h3>Afrique Tech</h3>
-
-            <p>
-                Innovation et technologie sur le continent.
-            </p>
-
-            <button
-                class="secondary"
-                onclick="joinCommunity(this)"
-            >
-                Rejoindre
-            </button>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     NOTIFICATIONS
-====================================================== -->
-
-<section class="page" id="notifications">
-
-    <div class="section-title">
-        <h2>Notifications</h2>
-        <span>Activité récente</span>
-    </div>
-
-
-    <div class="notification">
-
-        <img
-            class="avatar"
-            src="https://i.pravatar.cc/150?img=47"
-        >
-
-        <div class="notification-text">
-
-            <strong>Sarah a aimé ta publication.</strong>
-
-            <p>
-                Il y a 2 minutes
-            </p>
-
-        </div>
-
-        <button class="icon-btn">
-            ♡
-        </button>
-
-    </div>
-
-
-    <div class="notification">
-
-        <img
-            class="avatar"
-            src="https://i.pravatar.cc/150?img=11"
-        >
-
-        <div class="notification-text">
-
-            <strong>Kevin a commencé à te suivre.</strong>
-
-            <p>
-                Il y a 12 minutes
-            </p>
-
-        </div>
-
-        <button class="primary">
-            Suivre
-        </button>
-
-    </div>
-
-
-    <div class="notification">
-
-        <div class="avatar" style="display:grid;place-items:center;">
-            🔥
-        </div>
-
-        <div class="notification-text">
-
-            <strong>
-                Ta vidéo commence à être tendance.
-            </strong>
-
-            <p>
-                2 400 vues aujourd'hui
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     PROFILE
-====================================================== -->
-
-<section class="page" id="profile">
-
-    <div class="profile-cover"></div>
-
-    <div class="profile-main">
-
-        <img
-            class="profile-avatar"
-            src="https://i.pravatar.cc/300?img=12"
-        >
-
-        <div class="profile-info">
-
-            <div>
-
-                <h1>
-                    Manassé
-                    <span style="color:var(--accent2);font-size:16px;">
-                        ✓
-                    </span>
-                </h1>
-
-                <p>
-                    @manasse · Créateur · Technologie
-                </p>
-
-                <div class="stats">
-
-                    <div class="stat">
-                        <strong>128</strong>
-                        <span>Publications</span>
-                    </div>
-
-                    <div class="stat">
-                        <strong>4.8K</strong>
-                        <span>Abonnés</span>
-                    </div>
-
-                    <div class="stat">
-                        <strong>312</strong>
-                        <span>Abonnements</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <button
-                class="primary"
-                onclick="showToast('Modification du profil')"
-            >
-                Modifier le profil
-            </button>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ======================================================
-     SETTINGS
-====================================================== -->
-
-<section class="page" id="settings">
-
-    <div class="settings">
-
-        <div class="settings-menu">
-
-            <button class="setting-menu-btn active">
-                Compte
-            </button>
-
-            <button class="setting-menu-btn">
-                Confidentialité
-            </button>
-
-            <button class="setting-menu-btn">
-                Sécurité
-            </button>
-
-            <button class="setting-menu-btn">
-                Notifications
-            </button>
-
-            <button class="setting-menu-btn">
-                Données
-            </button>
-
-            <button class="setting-menu-btn">
-                Apparence
-            </button>
-
-        </div>
-
-
-        <div class="settings-panel">
-
-            <h2>Paramètres</h2>
-
-            <div class="setting-row">
-
-                <div>
-                    <strong>Compte privé</strong>
-                    <p>
-                        Seuls les utilisateurs acceptés peuvent
-                        voir tes contenus.
-                    </p>
-                </div>
-
-                <div
-                    class="switch"
-                    onclick="toggleSwitch(this)"
-                ></div>
-
-            </div>
-
-
-            <div class="setting-row">
-
-                <div>
-                    <strong>Confirmation de lecture</strong>
-                    <p>
-                        Afficher lorsque tu as lu un message.
-                    </p>
-                </div>
-
-                <div
-                    class="switch on"
-                    onclick="toggleSwitch(this)"
-                ></div>
-
-            </div>
-
-
-            <div class="setting-row">
-
-                <div>
-                    <strong>Présence en ligne</strong>
-                    <p>
-                        Autoriser les autres à voir ton statut.
-                    </p>
-                </div>
-
-                <div
-                    class="switch on"
-                    onclick="toggleSwitch(this)"
-                ></div>
-
-            </div>
-
-
-            <div class="setting-row">
-
-                <div>
-                    <strong>Économie de données</strong>
-                    <p>
-                        Réduire l'utilisation des données mobiles.
-                    </p>
-                </div>
-
-                <div
-                    class="switch"
-                    onclick="toggleSwitch(this)"
-                ></div>
-
-            </div>
-
-
-            <div class="setting-row">
-
-                <div>
-                    <strong>Notifications</strong>
-                    <p>
-                        Autoriser les notifications.
-                    </p>
-                </div>
-
-                <div
-                    class="switch on"
-                    onclick="toggleSwitch(this)"
-                ></div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
+<div class="intro">
+  <div class="mark"><span class="orb"></span> AURA</div>
+  <p>Une seule aura pour parler, regarder, créer et rejoindre — prototype d'interface.</p>
 </div>
 
+<div class="device">
+  <div class="screen">
+    <div class="notch"></div>
 
-<!-- ======================================================
-     MOBILE NAV
-====================================================== -->
-
-<nav class="mobile-nav">
-
-    <button
-        class="active"
-        onclick="showPage('home')"
-    >
-        ⌂
-    </button>
-
-    <button onclick="showPage('videos')">
-        ▶
-    </button>
-
-    <button onclick="showPage('create')">
-        ＋
-    </button>
-
-    <button onclick="showPage('messages')">
-        ◌
-    </button>
-
-    <button onclick="showPage('profile')">
-        ◉
-    </button>
-
-</nav>
-
-</main>
-
-</div>
-
-
-<!-- ======================================================
-     SEARCH MODAL
-====================================================== -->
-
-<div class="modal" id="searchModal">
-
-    <div class="modal-box">
-
-        <div class="modal-head">
-
-            <h2>Recherche</h2>
-
-            <button
-                class="close"
-                onclick="closeModal('searchModal')"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <input
-            class="search"
-            style="margin:0;width:100%;"
-            id="globalSearch"
-            placeholder="Rechercher une personne, vidéo, hashtag..."
-            oninput="globalSearch()"
-        >
-
-        <div
-            id="searchResults"
-            style="margin-top:15px;color:var(--muted);"
-        >
-            Commence à rechercher...
-        </div>
-
+    <div class="topbar">
+      <div class="brand"><span class="orb"></span>Aura</div>
+      <div class="icons">
+        <div class="icon-btn">🔍</div>
+        <div class="icon-btn">🔔</div>
+      </div>
     </div>
 
-</div>
+    <div class="views">
 
+      <!-- ACCUEIL -->
+      <div class="view active" id="view-home">
+        <div class="section-label">Statuts</div>
+        <div class="rail">
+          <div class="story"><div class="aura-ring dim"><div class="ph">＋</div></div><span>Ton aura</span></div>
+          <div class="story"><div class="aura-ring"><div class="ph">🦋</div></div><span>Naya</span></div>
+          <div class="story"><div class="aura-ring"><div class="ph">🛰️</div></div><span>Kesi</span></div>
+          <div class="story"><div class="aura-ring"><div class="ph">🎧</div></div><span>Zola</span></div>
+          <div class="story"><div class="aura-ring dim"><div class="ph">🌙</div></div><span>Ilo</span></div>
+        </div>
 
-<!-- ======================================================
-     CALL MODAL
-====================================================== -->
+        <div class="section-label">Pour toi</div>
+        <div class="card">
+          <div class="card-head">
+            <div class="avatar">🦋</div>
+            <div><div class="who">Naya · Studio Lumen</div><div class="meta">il y a 12 min · Communauté Créateurs</div></div>
+          </div>
+          <p class="body">Nouvelle série sur l'éclairage naturel en vidéo verticale — 3 astuces qui changent tout.</p>
+          <div class="media-block">clip vertical · 0:42</div>
+          <div class="actions">
+            <div class="act">✦ 2.1k</div>
+            <div class="act">💬 184</div>
+            <div class="act">↗ Partager</div>
+          </div>
+        </div>
 
-<div class="modal" id="callModal">
+        <div class="card">
+          <div class="card-head">
+            <div class="avatar">🛰️</div>
+            <div><div class="who">Communauté · Technologie RDC</div><div class="meta">Salon Robotique · nouvelle discussion</div></div>
+          </div>
+          <p class="body">« On lance un défi de construction de bras robotisé ce week-end, qui embarque ? »</p>
+          <div class="actions">
+            <div class="act">👥 38 en ligne</div>
+            <div class="act">💬 Rejoindre</div>
+          </div>
+        </div>
 
-    <div class="modal-box">
+        <div class="section-label">Tendances</div>
+        <div class="card">
+          <div class="card-head">
+            <div class="avatar">🎧</div>
+            <div><div class="who">Zola</div><div class="meta">a publié un son · utilisé 4.3k fois</div></div>
+          </div>
+          <div class="media-block">nouvelle tendance audio</div>
+        </div>
+      </div>
 
-        <div class="call-screen">
-
-            <h2 id="callTitle">
-                Appel vidéo
-            </h2>
-
-            <img
-                class="call-avatar"
-                src="https://i.pravatar.cc/300?img=47"
-            >
-
-            <h3 id="callPerson">
-                Sarah
-            </h3>
-
-            <p
-                class="call-status"
-                id="callStatus"
-            >
-                Connexion...
-            </p>
-
-            <div class="call-controls">
-
-                <button
-                    class="call-btn"
-                    onclick="showToast('Micro désactivé')"
-                >
-                    🎙
-                </button>
-
-                <button
-                    class="call-btn"
-                    onclick="showToast('Caméra désactivée')"
-                >
-                    ▣
-                </button>
-
-                <button
-                    class="call-btn end"
-                    onclick="endCall()"
-                >
-                    ☎
-                </button>
-
+      <!-- VIBE -->
+      <div class="view" id="view-vibe">
+        <div class="vibe-stack">
+          <div class="vibe-card">
+            <div class="vibe-tag">● en direct du fil</div>
+            <div class="vibe-side">
+              <div class="s-avatar"><div>🛰️</div></div>
+              <div class="s-icon">✦<span>3.4k</span></div>
+              <div class="s-icon">💬<span>212</span></div>
+              <div class="s-icon">↗<span>Partager</span></div>
             </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- ======================================================
-     STORY MODAL
-====================================================== -->
-
-<div class="modal" id="storyModal">
-
-    <div class="modal-box">
-
-        <div class="modal-head">
-
-            <h2 id="storyTitle">
-                Statut
-            </h2>
-
-            <button
-                class="close"
-                onclick="closeModal('storyModal')"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div
-            style="
-                height:500px;
-                border-radius:20px;
-                background:
-                linear-gradient(
-                    135deg,
-                    #1a2536,
-                    #05070d
-                );
-                display:grid;
-                place-items:center;
-                text-align:center;
-                padding:30px;
-            "
-        >
-
-            <div>
-
-                <div
-                    style="
-                        font-size:60px;
-                        margin-bottom:20px;
-                    "
-                >
-                    ✨
-                </div>
-
-                <h2>
-                    Une nouvelle vibe.
-                </h2>
-
-                <p
-                    style="
-                        color:var(--muted);
-                        margin-top:10px;
-                    "
-                >
-                    Statut temporaire de la communauté.
-                </p>
-
+            <div class="vibe-caption">
+              <div class="who">@kesi_builds</div>
+              <p>Montage d'un bras robotique en 20 secondes <span class="tags">#robotique #diy</span></p>
             </div>
-
+          </div>
+          <div class="vibe-card">
+            <div class="vibe-tag">🎵 son original</div>
+            <div class="vibe-side">
+              <div class="s-avatar"><div>🎧</div></div>
+              <div class="s-icon">✦<span>9.8k</span></div>
+              <div class="s-icon">💬<span>640</span></div>
+              <div class="s-icon">↗<span>Partager</span></div>
+            </div>
+            <div class="vibe-caption">
+              <div class="who">@zola.sound</div>
+              <p>Un nouveau son pour vos montages du soir <span class="tags">#musique #créateurs</span></p>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="view" id="view-messages">
+        <div class="section-label">Conversations</div>
+        <div class="conv">
+          <div class="avatar">🦋<span class="dot-online"></span></div>
+          <div class="conv-info">
+            <div class="conv-top"><span class="who">Naya</span><span class="time">18:42</span></div>
+            <div class="conv-sub"><p class="typing">est en train d'écrire…</p></div>
+          </div>
+        </div>
+        <div class="conv">
+          <div class="avatar">🛰️<span class="dot-online"></span></div>
+          <div class="conv-info">
+            <div class="conv-top"><span class="who">Groupe · Robotique</span><span class="time">17:10</span></div>
+            <div class="conv-sub"><p>Kesi : le prochain défi commence samedi</p><span class="unread">5</span></div>
+          </div>
+        </div>
+        <div class="conv">
+          <div class="avatar">🎧</div>
+          <div class="conv-info">
+            <div class="conv-top"><span class="who">Zola</span><span class="time">Hier</span></div>
+            <div class="conv-sub"><p>🎤 Message vocal · 0:18</p></div>
+          </div>
+        </div>
+        <div class="conv">
+          <div class="avatar">🌙</div>
+          <div class="conv-info">
+            <div class="conv-top"><span class="who">Ilo</span><span class="time">Hier</span></div>
+            <div class="conv-sub"><p>✓✓ Lu · à 09:14</p></div>
+          </div>
+        </div>
+
+        <div class="section-label">Appels récents</div>
+        <div class="conv">
+          <div class="avatar">🦋</div>
+          <div class="conv-info">
+            <div class="conv-top"><span class="who">Naya</span><span class="time">Aujourd'hui</span></div>
+            <div class="conv-sub"><p>📹 Appel vidéo · 14 min</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREER -->
+      <div class="view" id="view-create">
+        <div class="section-label">Créer</div>
+        <div class="create-grid">
+          <div class="create-tile wide">
+            <div><b>Nouvelle vidéo</b><br><span>Enregistrer ou importer</span></div>
+            <div class="ic">🎬</div>
+          </div>
+          <div class="create-tile"><div class="ic">✏️</div><div><b>Publication</b><br><span>Texte, photo, lien</span></div></div>
+          <div class="create-tile"><div class="ic">⏳</div><div><b>Statut</b><br><span>Visible 24h</span></div></div>
+          <div class="create-tile"><div class="ic">📊</div><div><b>Sondage</b><br><span>Questionner ta communauté</span></div></div>
+          <div class="create-tile"><div class="ic">📅</div><div><b>Événement</b><br><span>Date, lieu, rappel</span></div></div>
+        </div>
+      </div>
+
+      <!-- PROFIL -->
+      <div class="view" id="view-profile">
+        <div class="profile-head">
+          <div class="p-avatar"><div>🛰️</div></div>
+          <div class="p-name">Kesi Mbala</div>
+          <div class="p-handle">@kesi_builds · Compte vérifié</div>
+          <p class="p-bio">Robotique & prototypage. Je documente chaque projet en vidéo courte.</p>
+          <div class="stat-row">
+            <div class="stat"><b>128</b><span>publications</span></div>
+            <div class="stat"><b>42.3k</b><span>abonnés</span></div>
+            <div class="stat"><b>318</b><span>abonnements</span></div>
+          </div>
+          <div class="p-actions">
+            <div class="btn primary">Modifier le profil</div>
+            <div class="btn ghost">Partager</div>
+          </div>
+        </div>
+        <div class="tab-row">
+          <div class="tab on">Vidéos</div>
+          <div class="tab">Publications</div>
+          <div class="tab">Enregistrés</div>
+        </div>
+        <div class="grid3">
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+      </div>
 
     </div>
 
+    <div class="navbar">
+      <div class="nav-item active" data-view="home"><div class="ic-wrap">⌂</div>Accueil</div>
+      <div class="nav-item" data-view="vibe"><div class="ic-wrap">◈</div>Vibe</div>
+      <div class="nav-item create" data-view="create"><div class="ic-wrap">＋</div>Créer</div>
+      <div class="nav-item" data-view="messages"><div class="ic-wrap">✉</div>Messages</div>
+      <div class="nav-item" data-view="profile"><div class="ic-wrap">◉</div>Profil</div>
+    </div>
+  </div>
 </div>
-
-
-<div class="toast" id="toast"></div>
-
 
 <script>
-/* =========================================================
-   KONGOVIBE — JAVASCRIPT ENGINE
-========================================================= */
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-const pageNames = {
-    home:"Accueil",
-    videos:"Vibe",
-    messages:"Messages",
-    create:"Créer",
-    communities:"Communautés",
-    notifications:"Notifications",
-    profile:"Profil",
-    settings:"Paramètres"
-};
-
-function showPage(page){
-
-    document.querySelectorAll(".page")
-        .forEach(p => p.classList.remove("active"));
-
-    const target = document.getElementById(page);
-
-    if(target){
-        target.classList.add("active");
-    }
-
-    document.querySelectorAll(".nav-btn")
-        .forEach(btn => {
-
-            btn.classList.toggle(
-                "active",
-                btn.dataset.page === page
-            );
-
-        });
-
-    document.querySelectorAll(".mobile-nav button")
-        .forEach(btn => btn.classList.remove("active"));
-
-    document.getElementById("pageTitle").textContent =
-        pageNames[page] || "KongoVibe";
-
-    window.scrollTo(0,0);
-}
-
-
-/* Navigation desktop */
-
-document.querySelectorAll(".nav-btn")
-.forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        showPage(button.dataset.page);
-
+  const navItems = document.querySelectorAll('.nav-item');
+  const views = document.querySelectorAll('.view');
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      navItems.forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      views.forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + item.dataset.view).classList.add('active');
+      document.querySelector('.views').scrollTop = 0;
     });
-
-});
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-let toastTimer;
-
-function showToast(message){
-
-    const toast =
-        document.getElementById("toast");
-
-    toast.textContent = message;
-
-    toast.classList.add("show");
-
-    clearTimeout(toastTimer);
-
-    toastTimer = setTimeout(() => {
-
-        toast.classList.remove("show");
-
-    },2500);
-}
-
-
-/* =========================================================
-   LIKE PUBLICATION
-========================================================= */
-
-function toggleLike(button){
-
-    button.classList.toggle("liked");
-
-    const span = button.querySelector("span");
-
-    if(!span) return;
-
-    let number =
-        parseInt(span.textContent);
-
-    if(button.classList.contains("liked")){
-
-        number++;
-
-        button.innerHTML =
-            "♥ <span>" + number + "</span>";
-
-    }else{
-
-        number--;
-
-        button.innerHTML =
-            "♡ <span>" + number + "</span>";
-
-    }
-
-}
-
-
-/* =========================================================
-   VIDEO LIKE
-========================================================= */
-
-function videoLike(button){
-
-    button.textContent =
-        button.textContent === "♡"
-        ? "♥"
-        : "♡";
-
-}
-
-
-/* =========================================================
-   STORIES
-========================================================= */
-
-function openStory(name){
-
-    document.getElementById("storyTitle")
-        .textContent = "Statut de " + name;
-
-    document.getElementById("storyModal")
-        .classList.add("show");
-
-}
-
-
-/* =========================================================
-   MODALS
-========================================================= */
-
-function closeModal(id){
-
-    document.getElementById(id)
-        .classList.remove("show");
-
-}
-
-
-/* =========================================================
-   SEARCH
-========================================================= */
-
-function openSearch(){
-
-    document.getElementById("searchModal")
-        .classList.add("show");
-
-    setTimeout(() => {
-
-        document.getElementById("globalSearch")
-            .focus();
-
-    },100);
-
-}
-
-
-function globalSearch(){
-
-    const query =
-        document.getElementById("globalSearch")
-        .value
-        .trim()
-        .toLowerCase();
-
-    const results =
-        document.getElementById("searchResults");
-
-    if(!query){
-
-        results.textContent =
-            "Commence à rechercher...";
-
-        return;
-
-    }
-
-    const database = [
-        "Manassé",
-        "Sarah",
-        "Kevin Tech",
-        "Grace M.",
-        "David",
-        "#Technologie",
-        "#Robotique",
-        "#Kinshasa",
-        "#KongoVibe",
-        "Robotique RDC",
-        "Développeurs",
-        "Musique",
-        "Afrique Tech"
-    ];
-
-    const found =
-        database.filter(item =>
-            item.toLowerCase().includes(query)
-        );
-
-    if(found.length){
-
-        results.innerHTML =
-            found
-            .map(item =>
-                `<div
-                    style="
-                        padding:12px;
-                        border-bottom:1px solid var(--border);
-                        color:white;
-                    "
-                >
-                    🔎 ${item}
-                </div>`
-            )
-            .join("");
-
-    }else{
-
-        results.textContent =
-            "Aucun résultat.";
-
-    }
-
-}
-
-
-/* =========================================================
-   CONVERSATION SEARCH
-========================================================= */
-
-function filterConversations(){
-
-    const query =
-        document.getElementById("conversationSearch")
-        .value
-        .toLowerCase();
-
-    document.querySelectorAll(".conversation")
-        .forEach(item => {
-
-            const name =
-                item.dataset.name.toLowerCase();
-
-            item.style.display =
-                name.includes(query)
-                ? "flex"
-                : "none";
-
-        });
-
-}
-
-
-/* =========================================================
-   SELECT CONVERSATION
-========================================================= */
-
-const people = {
-
-    Sarah:{
-        image:"https://i.pravatar.cc/150?img=47"
-    },
-
-    Kevin:{
-        image:"https://i.pravatar.cc/150?img=11"
-    },
-
-    Grace:{
-        image:"https://i.pravatar.cc/150?img=32"
-    },
-
-    David:{
-        image:"https://i.pravatar.cc/150?img=13"
-    }
-
-};
-
-function selectConversation(name){
-
-    document.querySelectorAll(".conversation")
-        .forEach(c =>
-            c.classList.remove("active")
-        );
-
-    const selected =
-        [...document.querySelectorAll(".conversation")]
-        .find(c => c.dataset.name === name);
-
-    if(selected)
-        selected.classList.add("active");
-
-    document.getElementById("chatName")
-        .textContent = name;
-
-    if(people[name]){
-
-        document.getElementById("chatAvatar")
-            .src = people[name].image;
-
-    }
-
-    document.getElementById("chatBody").innerHTML = `
-
-        <div class="message other">
-            Salut 👋
-            <div class="message-time">
-                17:23
-            </div>
-        </div>
-
-        <div class="message me">
-            Salut ${name}, ça va ?
-            <div class="message-time">
-                17:24 ✓✓
-            </div>
-        </div>
-
-        <div class="message other">
-            Très bien ! On se parle bientôt.
-            <div class="message-time">
-                17:25
-            </div>
-        </div>
-
-    `;
-
-}
-
-
-/* =========================================================
-   SEND MESSAGE
-========================================================= */
-
-function sendMessage(event){
-
-    event.preventDefault();
-
-    const input =
-        document.getElementById("messageInput");
-
-    const text =
-        input.value.trim();
-
-    if(!text)
-        return;
-
-    const chat =
-        document.getElementById("chatBody");
-
-    const message =
-        document.createElement("div");
-
-    message.className =
-        "message me";
-
-    const now =
-        new Date();
-
-    const time =
-        now.toLocaleTimeString(
-            "fr-FR",
-            {
-                hour:"2-digit",
-                minute:"2-digit"
-            }
-        );
-
-    message.innerHTML = `
-        ${escapeHTML(text)}
-        <div class="message-time">
-            ${time} ✓
-        </div>
-    `;
-
-    chat.appendChild(message);
-
-    input.value = "";
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-    /* Simulation réponse */
-
-    setTimeout(() => {
-
-        const response =
-            document.createElement("div");
-
-        response.className =
-            "message other";
-
-        response.innerHTML = `
-            Message reçu. 👌
-            <div class="message-time">
-                ${time}
-            </div>
-        `;
-
-        chat.appendChild(response);
-
-        chat.scrollTop =
-            chat.scrollHeight;
-
-    },1000);
-
-}
-
-
-/* =========================================================
-   XSS PROTECTION FOR DEMO
-========================================================= */
-
-function escapeHTML(text){
-
-    const div =
-        document.createElement("div");
-
-    div.textContent = text;
-
-    return div.innerHTML;
-
-}
-
-
-/* =========================================================
-   CALL SYSTEM
-========================================================= */
-
-function startCall(type){
-
-    const modal =
-        document.getElementById("callModal");
-
-    const title =
-        document.getElementById("callTitle");
-
-    const status =
-        document.getElementById("callStatus");
-
-    title.textContent =
-        type === "video"
-        ? "Appel vidéo"
-        : "Appel audio";
-
-    status.textContent =
-        "Connexion...";
-
-    modal.classList.add("show");
-
-    setTimeout(() => {
-
-        status.textContent =
-            "Appel en cours";
-
-    },1500);
-
-}
-
-
-function endCall(){
-
-    closeModal("callModal");
-
-    showToast("Appel terminé");
-
-}
-
-
-/* =========================================================
-   CREATE SYSTEM
-========================================================= */
-
-let currentCreateType =
-    "publication";
-
-function switchCreate(type,button){
-
-    currentCreateType = type;
-
-    document.querySelectorAll(".create-tab")
-        .forEach(tab =>
-            tab.classList.remove("active")
-        );
-
-    button.classList.add("active");
-
-    const content =
-        document.getElementById("createContent");
-
-    if(type === "publication"){
-
-        content.innerHTML = `
-
-            <textarea
-                id="postText"
-                placeholder="Qu'as-tu envie de partager ?"
-            ></textarea>
-
-            <div
-                class="upload-area"
-                onclick="fakeUpload()"
-            >
-                ＋<br>
-                Ajouter une photo, une vidéo ou un fichier
-            </div>
-
-            <button
-                class="primary"
-                onclick="publishContent()"
-            >
-                Publier
-            </button>
-
-        `;
-
-    }
-
-    if(type === "video"){
-
-        content.innerHTML = `
-
-            <textarea
-                id="postText"
-                placeholder="Décris ta vidéo..."
-            ></textarea>
-
-            <div
-                class="upload-area"
-                onclick="fakeUpload()"
-            >
-                ▶<br>
-                Sélectionner une vidéo
-            </div>
-
-            <button
-                class="primary"
-                onclick="publishContent()"
-            >
-                Publier la vidéo
-            </button>
-
-        `;
-
-    }
-
-    if(type === "status"){
-
-        content.innerHTML = `
-
-            <textarea
-                id="postText"
-                placeholder="Écris ton statut..."
-            ></textarea>
-
-            <div
-                class="upload-area"
-                onclick="fakeUpload()"
-            >
-                ✦<br>
-                Ajouter une photo ou vidéo
-            </div>
-
-            <button
-                class="primary"
-                onclick="publishContent()"
-            >
-                Publier le statut
-            </button>
-
-        `;
-
-    }
-
-}
-
-
-function fakeUpload(){
-
-    showToast(
-        "Sélection de fichier — interface prête"
-    );
-
-}
-
-
-function publishContent(){
-
-    const textarea =
-        document.getElementById("postText");
-
-    const text =
-        textarea
-        ? textarea.value.trim()
-        : "";
-
-    if(!text){
-
-        showToast(
-            "Ajoute quelque chose avant de publier."
-        );
-
-        return;
-
-    }
-
-    showToast(
-        currentCreateType === "video"
-        ? "Vidéo publiée !"
-        : currentCreateType === "status"
-        ? "Statut publié !"
-        : "Publication créée !"
-    );
-
-    textarea.value = "";
-
-}
-
-
-/* =========================================================
-   COMMUNITY
-========================================================= */
-
-function joinCommunity(button){
-
-    if(button.dataset.joined){
-
-        button.textContent =
-            "Rejoindre";
-
-        delete button.dataset.joined;
-
-        showToast(
-            "Tu as quitté la communauté."
-        );
-
-    }else{
-
-        button.textContent =
-            "✓ Membre";
-
-        button.dataset.joined =
-            "true";
-
-        showToast(
-            "Bienvenue dans la communauté !"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-function toggleSwitch(element){
-
-    element.classList.toggle("on");
-
-    showToast(
-        element.classList.contains("on")
-        ? "Option activée"
-        : "Option désactivée"
-    );
-
-}
-
-
-/* =========================================================
-   KEYBOARD SHORTCUTS
-========================================================= */
-
-document.addEventListener("keydown",event => {
-
-    if(event.key === "Escape"){
-
-        document.querySelectorAll(".modal")
-            .forEach(modal =>
-                modal.classList.remove("show")
-            );
-
-    }
-
-});
-
-
-/* =========================================================
-   CLOSE MODALS WHEN CLICKING OUTSIDE
-========================================================= */
-
-document.querySelectorAll(".modal")
-.forEach(modal => {
-
-    modal.addEventListener("click",event => {
-
-        if(event.target === modal){
-
-            modal.classList.remove("show");
-
-        }
-
+  });
+
+  // Enregistrement du service worker (mode hors-ligne + installation PWA)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.log('Échec d\'enregistrement du service worker :', err);
+      });
     });
-
-});
-
-
-/* =========================================================
-   INITIALIZATION
-========================================================= */
-
-document.addEventListener("DOMContentLoaded",() => {
-
-    showPage("home");
-
-    console.log(
-        "KongoVibe interface initialized."
-    );
-
-});
-
-
-/* =========================================================
-   FUTURE BACKEND API PLACEHOLDER
-========================================================= */
-
-/*
-    Dans une vraie application, cette partie devra être
-    connectée à un backend.
-
-    Exemple :
-
-    GET  /api/users
-    POST /api/auth/login
-    POST /api/auth/register
-
-    GET  /api/messages
-    POST /api/messages
-
-    GET  /api/posts
-    POST /api/posts
-
-    GET  /api/videos
-    POST /api/videos
-
-    POST /api/calls
-
-    GET  /api/notifications
-
-    GET  /api/communities
-
-    etc.
-
-    Le frontend actuel constitue l'interface utilisateur.
-*/
-
-
+  }
 </script>
 
 </body>
