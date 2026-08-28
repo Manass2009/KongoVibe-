@@ -1,11 +1,12 @@
-// Service worker de base pour Aura — met en cache le "shell" de l'application
+// Service worker de base pour KongoVibe — met en cache le "shell" de l'application
 // afin qu'elle reste consultable même sans connexion (voir cahier des charges §23-24).
 
-const CACHE_NAME = 'KongoVibe;
+const CACHE_NAME = 'kongovibe-cache-v2';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './logo.jpg'
 ];
 
 // Installation : on met en cache les fichiers essentiels
