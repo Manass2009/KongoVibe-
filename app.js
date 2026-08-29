@@ -393,8 +393,12 @@ async function addComment(postId){
 }
 
 // --- Écran de publication de vidéo ---
+// La publication de vidéos nécessite Firebase Storage, qui exige le forfait
+// payant "Blaze". Pour rester sur le forfait gratuit "Spark" pour l'instant,
+// cette fonctionnalité est désactivée ici plutôt que simulée avec de fausses
+// données. Comptes, connexion et messagerie fonctionnent sans Storage.
 document.getElementById('open-create-video').addEventListener('click', () => {
-  document.getElementById('create-video-screen').classList.add('show');
+  alert("La publication de vidéos n'est pas encore activée : elle nécessite Firebase Storage, qui demande un forfait payant (avec un généreux quota gratuit). Comptes et messages fonctionnent déjà normalement.");
 });
 document.getElementById('create-video-back').addEventListener('click', () => {
   document.getElementById('create-video-screen').classList.remove('show');
