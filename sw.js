@@ -6,7 +6,9 @@ const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png'
+  './logo.png',
+  './app.js',
+  './firebase-config.js'
 ];
 
 // Installation : on met en cache les fichiers essentiels
