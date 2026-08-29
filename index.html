@@ -541,33 +541,6 @@
   </div>
 </div>
 
-<!-- PUBLICATION D'UNE VIDÉO -->
-<div class="overlay-screen" id="create-video-screen">
-  <div class="overlay-head">
-    <div class="icon-btn" id="create-video-back">←</div>
-    <b>Nouvelle vidéo</b>
-  </div>
-  <div class="overlay-body">
-    <form id="publish-video-form" style="display:flex; flex-direction:column; gap:14px;">
-      <div class="field">
-        <label>Choisir une vidéo</label>
-        <input type="file" id="video-file-input" accept="video/*">
-      </div>
-      <video id="video-preview" controls></video>
-      <div class="field">
-        <label>Description</label>
-        <input type="text" id="video-caption" placeholder="Décris ta vidéo…">
-      </div>
-      <div class="field">
-        <label>Hashtags</label>
-        <input type="text" id="video-hashtags" placeholder="#robotique #kongovibe">
-      </div>
-      <button type="submit" class="auth-submit">Publier</button>
-      <div id="publish-progress"></div>
-    </form>
-  </div>
-</div>
-
 <div class="screen">
 
     <div class="topbar">
@@ -631,13 +604,6 @@
         </div>
       </div>
 
-      <!-- VIBE -->
-      <div class="view" id="view-vibe">
-        <div class="vibe-stack" id="vibe-feed">
-          <div class="meta" style="padding:20px 4px;">Chargement des vidéos…</div>
-        </div>
-      </div>
-
       <!-- MESSAGES -->
       <div class="view" id="view-messages">
         <div class="section-label">Nouvelle discussion</div>
@@ -658,8 +624,8 @@
       <div class="view" id="view-create">
         <div class="section-label">Créer</div>
         <div class="create-grid">
-          <div class="create-tile wide" id="open-create-video" style="cursor:pointer;">
-            <div><b>Nouvelle vidéo</b><br><span>Importer depuis ton téléphone</span></div>
+          <div class="create-tile wide" data-soon style="cursor:pointer;">
+            <div><b>Nouvelle vidéo</b><br><span>Bientôt — nécessite un forfait Firebase payant</span></div>
             <div class="ic">🎬</div>
           </div>
           <div class="create-tile" data-soon style="cursor:pointer;"><div class="ic">✏️</div><div><b>Publication</b><br><span>Bientôt disponible</span></div></div>
@@ -701,7 +667,6 @@
 
     <div class="navbar">
       <div class="nav-item active" data-view="home"><div class="ic-wrap">⌂</div>Accueil</div>
-      <div class="nav-item" data-view="vibe"><div class="ic-wrap">◈</div>Vibe</div>
       <div class="nav-item create" data-view="create"><div class="ic-wrap">＋</div>Créer</div>
       <div class="nav-item" data-view="messages"><div class="ic-wrap">✉</div>Messages</div>
       <div class="nav-item" data-view="profile"><div class="ic-wrap">◉</div>Profil</div>
