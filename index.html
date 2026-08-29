@@ -148,6 +148,62 @@
   .auth-switch b{ color:var(--cyan); font-weight:600; cursor:pointer; }
   .auth-hidden{ display:none !important; }
 
+  /* ---------- ÉCRANS PLEIN ÉCRAN (chat / appel / publication) ---------- */
+  .overlay-screen{
+    position:fixed; inset:0; z-index:80;
+    background: var(--bg-void);
+    display:flex; flex-direction:column;
+    opacity:0; visibility:hidden; transform:translateX(16px);
+    transition: opacity .3s ease, transform .3s ease, visibility .3s ease;
+  }
+  .overlay-screen.show{ opacity:1; visibility:visible; transform:translateX(0); }
+  .overlay-head{
+    display:flex; align-items:center; gap:12px;
+    padding: calc(env(safe-area-inset-top,0px) + 16px) 18px 14px;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .overlay-head b{ font-size:14.5px; }
+  .overlay-head .sub{ font-size:11px; color:var(--text-low); }
+  .overlay-body{ flex:1; overflow-y:auto; padding:14px 18px; }
+  .overlay-foot{ padding:12px 14px calc(env(safe-area-inset-bottom,0px) + 12px); border-top:1px solid var(--line); }
+
+  #chat-messages{ display:flex; flex-direction:column; }
+  #chat-send-form{ display:flex; gap:8px; }
+  #chat-input{
+    flex:1; padding:12px 14px; border-radius:20px;
+    background: var(--bg-panel); border:1px solid var(--line);
+    color: var(--text-hi); font-size:13.5px; outline:none;
+  }
+  #chat-send-form button{
+    width:42px; height:42px; border-radius:50%; border:none;
+    background: var(--grad-aura); color:#0A0A12; font-size:16px; cursor:pointer;
+  }
+
+  #create-video-screen .overlay-body{ display:flex; flex-direction:column; gap:14px; }
+  #video-preview{ width:100%; border-radius:16px; display:none; max-height:280px; background:#000; }
+  #publish-progress{ display:none; font-size:12px; color:var(--cyan); }
+
+  #call-screen{ background:#000; }
+  #call-screen .overlay-body{ position:relative; padding:0; }
+  #remote-video{ width:100%; height:100%; object-fit:cover; background:#0a0a12; }
+  #local-video{
+    position:absolute; width:110px; height:150px; right:16px; top:16px;
+    border-radius:14px; object-fit:cover; border:2px solid var(--line);
+    background:#111;
+  }
+  .call-controls{
+    position:absolute; bottom:calc(env(safe-area-inset-bottom,0px) + 24px);
+    left:0; right:0; display:flex; justify-content:center; gap:18px;
+  }
+  .call-btn{
+    width:54px; height:54px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; cursor:pointer; border:1px solid var(--line);
+    background: rgba(255,255,255,0.08); color:#fff;
+  }
+  .call-btn.hangup{ background: var(--magenta); border-color:var(--magenta); }
+
   /* ---------- TOP BAR ---------- */
   .topbar{
     padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px 14px;
@@ -393,7 +449,7 @@
 
 <!-- ÉCRAN DE DÉMARRAGE -->
 <div id="splash-screen">
-  <img src="logo.jpg" alt="KongoVibe">
+  <img src="logo.png" alt="KongoVibe">
   <div class="splash-name">KongoVibe</div>
   <div class="splash-tag">Parler. Regarder. Créer. Ensemble.</div>
   <div class="splash-bar"><span></span></div>
@@ -402,7 +458,7 @@
 <!-- ÉCRAN D'INSCRIPTION / CONNEXION -->
 <div id="auth-screen">
   <div class="auth-head">
-    <img src="logo.jpg" alt="KongoVibe">
+    <img src="logo.png" alt="KongoVibe">
     <h1 id="auth-title">Créer ton compte</h1>
     <p id="auth-subtitle">Rejoins KongoVibe pour parler, appeler, créer et suivre tes communautés.</p>
   </div>
@@ -418,8 +474,8 @@
       <div class="field-error" id="username-error">Ce nom d'utilisateur est déjà pris sur cet appareil.</div>
     </div>
     <div class="field">
-      <label>Téléphone ou e-mail</label>
-      <input type="text" id="reg-contact" placeholder="Ex. +243 000 000 000" required>
+      <label>Adresse e-mail</label>
+      <input type="email" id="reg-contact" placeholder="toi@example.com" required>
     </div>
     <div class="field">
       <label>Mot de passe</label>
@@ -430,8 +486,8 @@
 
   <form id="login-form" class="auth-hidden">
     <div class="field">
-      <label>Nom d'utilisateur</label>
-      <input type="text" id="log-username" placeholder="Ton nom d'utilisateur" required>
+      <label>Nom d'utilisateur ou e-mail</label>
+      <input type="text" id="log-username" placeholder="Ton nom d'utilisateur ou ton e-mail" required>
     </div>
     <div class="field">
       <label>Mot de passe</label>
@@ -444,6 +500,71 @@
   <div class="auth-switch">
     <span id="switch-to-login">Déjà un compte ? <b>Se connecter</b></span>
     <span id="switch-to-register" class="auth-hidden">Pas encore de compte ? <b>S'inscrire</b></span>
+  </div>
+</div>
+
+<!-- FIL DE DISCUSSION -->
+<div class="overlay-screen" id="chat-thread-screen">
+  <div class="overlay-head">
+    <div class="icon-btn" id="chat-back-btn">←</div>
+    <div style="flex:1;">
+      <b id="chat-peer-name">—</b>
+      <div class="sub" id="chat-peer-handle">—</div>
+    </div>
+    <div class="icon-btn" id="chat-call-btn">📹</div>
+  </div>
+  <div class="overlay-body" id="chat-messages"></div>
+  <div class="overlay-foot">
+    <form id="chat-send-form">
+      <input type="text" id="chat-input" placeholder="Écrire un message…" autocomplete="off">
+      <button type="submit">➤</button>
+    </form>
+  </div>
+</div>
+
+<!-- APPEL VIDÉO -->
+<div class="overlay-screen" id="call-screen">
+  <div class="overlay-head" style="border-bottom:none;">
+    <div style="flex:1;">
+      <b id="call-peer-name" style="color:#fff;">—</b>
+      <div class="sub">Appel vidéo en cours…</div>
+    </div>
+  </div>
+  <div class="overlay-body">
+    <video id="remote-video" autoplay playsinline></video>
+    <video id="local-video" autoplay playsinline muted></video>
+    <div class="call-controls">
+      <div class="call-btn" id="toggle-mic-btn">🎙️</div>
+      <div class="call-btn hangup" id="hangup-btn">✕</div>
+      <div class="call-btn" id="toggle-cam-btn">🎥</div>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLICATION D'UNE VIDÉO -->
+<div class="overlay-screen" id="create-video-screen">
+  <div class="overlay-head">
+    <div class="icon-btn" id="create-video-back">←</div>
+    <b>Nouvelle vidéo</b>
+  </div>
+  <div class="overlay-body">
+    <form id="publish-video-form" style="display:flex; flex-direction:column; gap:14px;">
+      <div class="field">
+        <label>Choisir une vidéo</label>
+        <input type="file" id="video-file-input" accept="video/*">
+      </div>
+      <video id="video-preview" controls></video>
+      <div class="field">
+        <label>Description</label>
+        <input type="text" id="video-caption" placeholder="Décris ta vidéo…">
+      </div>
+      <div class="field">
+        <label>Hashtags</label>
+        <input type="text" id="video-hashtags" placeholder="#robotique #kongovibe">
+      </div>
+      <button type="submit" class="auth-submit">Publier</button>
+      <div id="publish-progress"></div>
+    </form>
   </div>
 </div>
 
@@ -461,6 +582,9 @@
 
       <!-- ACCUEIL -->
       <div class="view active" id="view-home">
+        <div class="meta" style="padding:8px 4px 14px; border-bottom:1px dashed var(--line); margin-bottom:6px;">
+          Aperçu de style — ce fil n'est pas encore branché à de vraies publications. Les vidéos (Vibe) et les messages, eux, sont réels.
+        </div>
         <div class="section-label">Statuts</div>
         <div class="rail">
           <div class="story"><div class="aura-ring dim"><div class="ph">＋</div></div><span>Ton statut</span></div>
@@ -509,75 +633,24 @@
 
       <!-- VIBE -->
       <div class="view" id="view-vibe">
-        <div class="vibe-stack">
-          <div class="vibe-card">
-            <div class="vibe-tag">● en direct du fil</div>
-            <div class="vibe-side">
-              <div class="s-avatar"><div>🛰️</div></div>
-              <div class="s-icon">✦<span>3.4k</span></div>
-              <div class="s-icon">💬<span>212</span></div>
-              <div class="s-icon">↗<span>Partager</span></div>
-            </div>
-            <div class="vibe-caption">
-              <div class="who">@kesi_builds</div>
-              <p>Montage d'un bras robotique en 20 secondes <span class="tags">#robotique #diy</span></p>
-            </div>
-          </div>
-          <div class="vibe-card">
-            <div class="vibe-tag">🎵 son original</div>
-            <div class="vibe-side">
-              <div class="s-avatar"><div>🎧</div></div>
-              <div class="s-icon">✦<span>9.8k</span></div>
-              <div class="s-icon">💬<span>640</span></div>
-              <div class="s-icon">↗<span>Partager</span></div>
-            </div>
-            <div class="vibe-caption">
-              <div class="who">@zola.sound</div>
-              <p>Un nouveau son pour vos montages du soir <span class="tags">#musique #créateurs</span></p>
-            </div>
-          </div>
+        <div class="vibe-stack" id="vibe-feed">
+          <div class="meta" style="padding:20px 4px;">Chargement des vidéos…</div>
         </div>
       </div>
 
       <!-- MESSAGES -->
       <div class="view" id="view-messages">
-        <div class="section-label">Conversations</div>
-        <div class="conv">
-          <div class="avatar">🦋<span class="dot-online"></span></div>
-          <div class="conv-info">
-            <div class="conv-top"><span class="who">Naya</span><span class="time">18:42</span></div>
-            <div class="conv-sub"><p class="typing">est en train d'écrire…</p></div>
-          </div>
+        <div class="section-label">Nouvelle discussion</div>
+        <div style="display:flex; gap:8px; margin-bottom:6px;">
+          <input type="text" id="dm-search-input" placeholder="Chercher un nom d'utilisateur…"
+                 style="flex:1; padding:11px 13px; border-radius:12px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); font-size:13px; outline:none;">
+          <div class="btn primary" id="dm-search-btn" style="flex:0 0 auto; padding:11px 16px;">Chercher</div>
         </div>
-        <div class="conv">
-          <div class="avatar">🛰️<span class="dot-online"></span></div>
-          <div class="conv-info">
-            <div class="conv-top"><span class="who">Groupe · Robotique</span><span class="time">17:10</span></div>
-            <div class="conv-sub"><p>Kesi : le prochain défi commence samedi</p><span class="unread">5</span></div>
-          </div>
-        </div>
-        <div class="conv">
-          <div class="avatar">🎧</div>
-          <div class="conv-info">
-            <div class="conv-top"><span class="who">Zola</span><span class="time">Hier</span></div>
-            <div class="conv-sub"><p>🎤 Message vocal · 0:18</p></div>
-          </div>
-        </div>
-        <div class="conv">
-          <div class="avatar">🌙</div>
-          <div class="conv-info">
-            <div class="conv-top"><span class="who">Ilo</span><span class="time">Hier</span></div>
-            <div class="conv-sub"><p>✓✓ Lu · à 09:14</p></div>
-          </div>
-        </div>
+        <div id="dm-search-results"></div>
 
-        <div class="section-label">Appels récents</div>
-        <div class="conv">
-          <div class="avatar">🦋</div>
-          <div class="conv-info">
-            <div class="conv-top"><span class="who">Naya</span><span class="time">Aujourd'hui</span></div>
-            <div class="conv-sub"><p>📹 Appel vidéo · 14 min</p></div>
-          </div>
+        <div class="section-label">Conversations</div>
+        <div id="conversations-list">
+          <div class="meta" style="padding:14px 4px;">Connecte-toi pour voir tes conversations.</div>
         </div>
       </div>
 
@@ -585,14 +658,14 @@
       <div class="view" id="view-create">
         <div class="section-label">Créer</div>
         <div class="create-grid">
-          <div class="create-tile wide">
-            <div><b>Nouvelle vidéo</b><br><span>Enregistrer ou importer</span></div>
+          <div class="create-tile wide" id="open-create-video" style="cursor:pointer;">
+            <div><b>Nouvelle vidéo</b><br><span>Importer depuis ton téléphone</span></div>
             <div class="ic">🎬</div>
           </div>
-          <div class="create-tile"><div class="ic">✏️</div><div><b>Publication</b><br><span>Texte, photo, lien</span></div></div>
-          <div class="create-tile"><div class="ic">⏳</div><div><b>Statut</b><br><span>Visible 24h</span></div></div>
-          <div class="create-tile"><div class="ic">📊</div><div><b>Sondage</b><br><span>Questionner ta communauté</span></div></div>
-          <div class="create-tile"><div class="ic">📅</div><div><b>Événement</b><br><span>Date, lieu, rappel</span></div></div>
+          <div class="create-tile" data-soon style="cursor:pointer;"><div class="ic">✏️</div><div><b>Publication</b><br><span>Bientôt disponible</span></div></div>
+          <div class="create-tile" data-soon style="cursor:pointer;"><div class="ic">⏳</div><div><b>Statut</b><br><span>Bientôt disponible</span></div></div>
+          <div class="create-tile" data-soon style="cursor:pointer;"><div class="ic">📊</div><div><b>Sondage</b><br><span>Bientôt disponible</span></div></div>
+          <div class="create-tile" data-soon style="cursor:pointer;"><div class="ic">📅</div><div><b>Événement</b><br><span>Bientôt disponible</span></div></div>
         </div>
       </div>
 
@@ -635,149 +708,13 @@
     </div>
 </div>
 
-<script>
-  const navItems = document.querySelectorAll('.nav-item');
-  const views = document.querySelectorAll('.view');
-  navItems.forEach(item => {
-    item.addEventListener('click', () => {
-      navItems.forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      views.forEach(v => v.classList.remove('active'));
-      document.getElementById('view-' + item.dataset.view).classList.add('active');
-      document.querySelector('.views').scrollTop = 0;
-    });
-  });
-
-  // Enregistrement du service worker (mode hors-ligne + installation PWA)
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => {
-        console.log('Échec d\'enregistrement du service worker :', err);
-      });
-    });
-  }
-
-  /* =========================================================
-     COMPTE — inscription / connexion réelles, stockées sur l'appareil
-     (localStorage). Les comptes créés ici restent propres à CET
-     appareil/navigateur : pour des comptes partagés entre plusieurs
-     téléphones, il faut un vrai backend (voir message ci-dessous).
-  ========================================================= */
-  const USERS_KEY = 'kongovibe_users';
-  const SESSION_KEY = 'kongovibe_session';
-
-  function getUsers(){
-    try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; }
-    catch(e){ return {}; }
-  }
-  function saveUsers(users){ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
-  function setSession(username){ localStorage.setItem(SESSION_KEY, username); }
-  function getSession(){ return localStorage.getItem(SESSION_KEY); }
-  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
-
-  function applyProfile(user){
-    const nameEl = document.getElementById('profile-name');
-    const handleEl = document.getElementById('profile-handle');
-    if(nameEl) nameEl.textContent = user.name;
-    if(handleEl) handleEl.textContent = '@' + user.username + ' · Nouveau membre';
-  }
-
-  function enterApp(username){
-    const users = getUsers();
-    const user = users[username];
-    setSession(username);
-    if(user) applyProfile(user);
-    document.getElementById('auth-screen').classList.remove('show');
-  }
-
-  // --- Formulaires : bascule inscription / connexion ---
-  const registerForm = document.getElementById('register-form');
-  const loginForm = document.getElementById('login-form');
-  const authTitle = document.getElementById('auth-title');
-  const authSubtitle = document.getElementById('auth-subtitle');
-  const switchToLogin = document.getElementById('switch-to-login');
-  const switchToRegister = document.getElementById('switch-to-register');
-
-  switchToLogin.addEventListener('click', () => {
-    registerForm.classList.add('auth-hidden');
-    loginForm.classList.remove('auth-hidden');
-    switchToLogin.classList.add('auth-hidden');
-    switchToRegister.classList.remove('auth-hidden');
-    authTitle.textContent = 'Content de te revoir';
-    authSubtitle.textContent = 'Connecte-toi pour retrouver tes messages et tes vidéos.';
-  });
-  switchToRegister.addEventListener('click', () => {
-    loginForm.classList.add('auth-hidden');
-    registerForm.classList.remove('auth-hidden');
-    switchToRegister.classList.add('auth-hidden');
-    switchToLogin.classList.remove('auth-hidden');
-    authTitle.textContent = 'Créer ton compte';
-    authSubtitle.textContent = 'Rejoins KongoVibe pour parler, appeler, créer et suivre tes communautés.';
-  });
-
-  // --- Inscription ---
-  registerForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('reg-name').value.trim();
-    const username = document.getElementById('reg-username').value.trim().toLowerCase().replace(/\s+/g,'_');
-    const contact = document.getElementById('reg-contact').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const usernameError = document.getElementById('username-error');
-
-    const users = getUsers();
-    if(users[username]){
-      usernameError.style.display = 'block';
-      return;
-    }
-    usernameError.style.display = 'none';
-
-    users[username] = { name, username, contact, password, createdAt: Date.now() };
-    saveUsers(users);
-    enterApp(username);
-  });
-
-  // --- Connexion ---
-  loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('log-username').value.trim().toLowerCase().replace(/\s+/g,'_');
-    const password = document.getElementById('log-password').value;
-    const loginError = document.getElementById('login-error');
-
-    const users = getUsers();
-    if(users[username] && users[username].password === password){
-      loginError.style.display = 'none';
-      enterApp(username);
-    } else {
-      loginError.style.display = 'block';
-    }
-  });
-
-  // --- Déconnexion ---
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    clearSession();
-    document.getElementById('auth-screen').classList.add('show');
-    registerForm.classList.remove('auth-hidden');
-    loginForm.classList.add('auth-hidden');
-    switchToLogin.classList.remove('auth-hidden');
-    switchToRegister.classList.add('auth-hidden');
-    registerForm.reset();
-    loginForm.reset();
-  });
-
-  // --- Séquence de démarrage : splash → (auth si besoin) → app ---
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      document.getElementById('splash-screen').classList.add('hide');
-      const session = getSession();
-      if(session && getUsers()[session]){
-        applyProfile(getUsers()[session]);
-        // déjà connecté sur cet appareil : on entre directement dans l'app
-      } else {
-        document.getElementById('auth-screen').classList.add('show');
-      }
-    }, 1800);
-  });
-</script>
+<!-- Firebase (compat SDK — simple à utiliser sans étape de build) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
