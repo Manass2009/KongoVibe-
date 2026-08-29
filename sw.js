@@ -6,7 +6,7 @@ const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './logo.jpg'
+  './logo.png'
 ];
 
 // Installation : on met en cache les fichiers essentiels
