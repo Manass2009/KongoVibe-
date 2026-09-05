@@ -6,7 +6,7 @@ const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png',
+  './logo.jpg',
   './app.js',
   './firebase-config.js'
 ];
