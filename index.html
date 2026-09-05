@@ -474,8 +474,9 @@
       <div class="field-error" id="username-error">Ce nom d'utilisateur est déjà pris sur cet appareil.</div>
     </div>
     <div class="field">
-      <label>Adresse e-mail</label>
-      <input type="email" id="reg-contact" placeholder="toi@example.com" required>
+      <label>Numéro de téléphone</label>
+      <input type="tel" id="reg-contact" placeholder="Ex. +243 8xx xxx xxx" required>
+      <div class="field-error" style="display:block; color:var(--text-low);">Non vérifié par SMS pour l'instant — garde-le simple à retenir.</div>
     </div>
     <div class="field">
       <label>Mot de passe</label>
@@ -486,8 +487,8 @@
 
   <form id="login-form" class="auth-hidden">
     <div class="field">
-      <label>Nom d'utilisateur ou e-mail</label>
-      <input type="text" id="log-username" placeholder="Ton nom d'utilisateur ou ton e-mail" required>
+      <label>Nom d'utilisateur ou numéro de téléphone</label>
+      <input type="text" id="log-username" placeholder="Ton nom d'utilisateur ou ton numéro" required>
     </div>
     <div class="field">
       <label>Mot de passe</label>
