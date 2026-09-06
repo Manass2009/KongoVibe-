@@ -308,13 +308,13 @@ async function runUserSearch(){
       const row = document.createElement('div');
       row.className = 'conv';
       row.innerHTML = `
-        <div class="avatar">👤</div>
+        <div class="avatar">${avatarHtml(peer.photo)}</div>
         <div class="conv-info">
           <div class="conv-top"><span class="who">${escapeHtml(peer.name)}</span></div>
           <div class="conv-sub"><p>@${escapeHtml(peer.username)}</p></div>
         </div>`;
       row.addEventListener('click', () => {
-        openChatThread({ uid: peer.uid, name: peer.name, username: peer.username });
+        openChatThread({ uid: peer.uid, name: peer.name, username: peer.username, photo: peer.photo || '' });
         resultsBox.innerHTML = '';
         input.value = '';
       });
@@ -333,6 +333,9 @@ document.getElementById('dm-search-input').addEventListener('input', () => {
 });
 
 // --- Liste des conversations, en temps réel ---
+let knownLastMessageAt = {}; // pour détecter les VRAIS nouveaux messages (notifications)
+let feedStartedAt = Date.now();
+
 function startConversationsListener(){
   const list = document.getElementById('conversations-list');
   list.innerHTML = '<div class="meta" style="padding:14px 4px;">Chargement de tes conversations…</div>';
@@ -356,16 +359,29 @@ function startConversationsListener(){
         const peerUid = conv.members.find(m => m !== currentUser.uid);
         const peerName = conv.memberNames ? conv.memberNames[peerUid] : 'Utilisateur';
         const peerUsername = conv.memberUsernames ? conv.memberUsernames[peerUid] : '';
+        const peerPhoto = conv.memberPhotos ? conv.memberPhotos[peerUid] : '';
         const row = document.createElement('div');
         row.className = 'conv';
         row.innerHTML = `
-          <div class="avatar">👤</div>
+          <div class="avatar">${avatarHtml(peerPhoto)}</div>
           <div class="conv-info">
             <div class="conv-top"><span class="who">${escapeHtml(peerName)}</span><span class="time">${formatTime(conv.lastMessageAt)}</span></div>
             <div class="conv-sub"><p>${escapeHtml(conv.lastMessage || '')}</p></div>
           </div>`;
-        row.addEventListener('click', () => openChatThread({ uid: peerUid, name: peerName, username: peerUsername }));
+        row.addEventListener('click', () => openChatThread({ uid: peerUid, name: peerName, username: peerUsername, photo: peerPhoto }));
         list.appendChild(row);
+
+        // --- Notification réelle + son pour un VRAI nouveau message ---
+        const ts = conv.lastMessageAt ? conv.lastMessageAt.toMillis() : 0;
+        const previous = knownLastMessageAt[doc.id];
+        const isNewIncoming = conv.lastSenderId && conv.lastSenderId !== currentUser.uid
+          && ts > feedStartedAt
+          && previous !== undefined && ts > previous
+          && activeConversationId !== doc.id; // pas de notif si le fil est déjà ouvert
+        if(isNewIncoming){
+          notifyNewMessage(peerName, conv.lastMessage || 'Nouveau message');
+        }
+        knownLastMessageAt[doc.id] = ts;
       });
     }, err => {
       console.error('Conversations:', err);
@@ -379,6 +395,7 @@ function openChatThread(peer){
   activeConversationId = conversationId(currentUser.uid, peer.uid);
   document.getElementById('chat-peer-name').textContent = peer.name;
   document.getElementById('chat-peer-handle').textContent = '@' + peer.username;
+  document.getElementById('chat-peer-avatar').innerHTML = avatarHtml(peer.photo);
   document.getElementById('chat-thread-screen').classList.add('show');
 
   const box = document.getElementById('chat-messages');
@@ -391,10 +408,18 @@ function openChatThread(peer){
       box.innerHTML = '';
       snap.forEach(doc => {
         const m = doc.data();
-        const bubble = document.createElement('div');
         const mine = m.senderId === currentUser.uid;
-        bubble.style.cssText = `max-width:75%; margin:6px 0; padding:10px 13px; border-radius:16px; font-size:13.5px; line-height:1.4; ${mine ? 'margin-left:auto; background:var(--grad-aura); color:#0A0A12;' : 'background:var(--bg-panel); border:1px solid var(--line);'}`;
-        bubble.textContent = m.text;
+        const bubble = document.createElement('div');
+        bubble.style.cssText = `max-width:75%; margin:6px 0; padding:${m.type === 'audio' ? '8px 10px' : '10px 13px'}; border-radius:16px; font-size:13.5px; line-height:1.4; ${mine ? 'margin-left:auto; background:var(--grad-aura); color:#12141c;' : 'background:var(--bg-panel); border:1px solid var(--line);'}`;
+        if(m.type === 'audio' && m.audio){
+          const audio = document.createElement('audio');
+          audio.controls = true;
+          audio.src = m.audio;
+          audio.style.cssText = 'width:210px; height:34px; display:block;';
+          bubble.appendChild(audio);
+        } else {
+          bubble.textContent = m.text;
+        }
         box.appendChild(bubble);
       });
       box.scrollTop = box.scrollHeight;
@@ -403,10 +428,26 @@ function openChatThread(peer){
 
 document.getElementById('chat-back-btn').addEventListener('click', () => {
   document.getElementById('chat-thread-screen').classList.remove('show');
+  activeConversationId = null;
   if(unsubMessages) unsubMessages();
 });
 
-// --- Envoyer un message ---
+async function ensureConversationDoc(){
+  const convRef = db.collection('conversations').doc(activeConversationId);
+  const convSnap = await convRef.get();
+  if(!convSnap.exists){
+    await convRef.set({
+      members: [currentUser.uid, activePeer.uid],
+      memberNames: { [currentUser.uid]: currentProfile.name, [activePeer.uid]: activePeer.name },
+      memberUsernames: { [currentUser.uid]: currentProfile.username, [activePeer.uid]: activePeer.username },
+      memberPhotos: { [currentUser.uid]: currentProfile.photo || '', [activePeer.uid]: activePeer.photo || '' },
+      lastMessage: '', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(), lastSenderId: currentUser.uid
+    });
+  }
+  return convRef;
+}
+
+// --- Envoyer un message texte ---
 document.getElementById('chat-send-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('chat-input');
@@ -414,39 +455,118 @@ document.getElementById('chat-send-form').addEventListener('submit', async (e) =
   if(!text || !activeConversationId) return;
   input.value = '';
 
-  const convRef = db.collection('conversations').doc(activeConversationId);
-  const convSnap = await convRef.get();
-
-  if(!convSnap.exists){
-    await convRef.set({
-      members: [currentUser.uid, activePeer.uid],
-      memberNames: { [currentUser.uid]: currentProfile.name, [activePeer.uid]: activePeer.name },
-      memberUsernames: { [currentUser.uid]: currentProfile.username, [activePeer.uid]: activePeer.username },
-      lastMessage: text,
-      lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } else {
-    await convRef.update({
-      lastMessage: text,
-      lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  }
-
+  const convRef = await ensureConversationDoc();
+  await convRef.update({
+    lastMessage: text,
+    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+    lastSenderId: currentUser.uid
+  });
   await convRef.collection('messages').add({
     senderId: currentUser.uid,
+    type: 'text',
     text,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 });
 
 /* ==========================================================================
-   Publication, vidéos, statuts, sondages, événements, communautés : retirés
-   pour l'instant plutôt que simulés. Seuls comptes + messagerie + appels
-   vidéo sont branchés à de vraies données pour l'instant.
+   MESSAGES VOCAUX — vrai enregistrement micro, stocké en base64 dans
+   Firestore (même principe que les photos), donc gratuit. Limité à 60
+   secondes pour rester largement sous la limite de taille d'un document.
    ========================================================================== */
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingTimer = null;
+
+document.getElementById('chat-mic-btn').addEventListener('click', async () => {
+  if(!activeConversationId){ return; }
+  if(mediaRecorder && mediaRecorder.state === 'recording'){
+    mediaRecorder.stop();
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      clearTimeout(recordingTimer);
+      document.getElementById('recording-indicator').style.display = 'none';
+      document.getElementById('chat-mic-btn').style.color = '';
+
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const audioBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      const convRef = await ensureConversationDoc();
+      await convRef.update({
+        lastMessage: '🎤 Message vocal',
+        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSenderId: currentUser.uid
+      });
+      await convRef.collection('messages').add({
+        senderId: currentUser.uid,
+        type: 'audio',
+        audio: audioBase64,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    };
+    mediaRecorder.start();
+    document.getElementById('recording-indicator').style.display = 'block';
+    document.getElementById('chat-mic-btn').style.color = 'var(--magenta)';
+    // Coupure automatique à 60s pour rester sous la limite Firestore
+    recordingTimer = setTimeout(() => {
+      if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+    }, 60000);
+  } catch(err){
+    alert("Impossible d'accéder au micro : " + err.message);
+  }
+});
 
 /* ==========================================================================
-   APPELS VIDÉO RÉELS — WebRTC signalé via Firestore
+   NOTIFICATIONS RÉELLES + SON — tant que l'app est ouverte (même en arrière-
+   plan ou dans un autre onglet). Une vraie notification qui réveille le
+   téléphone quand l'app est totalement fermée demanderait un serveur
+   d'envoi (Firebase Cloud Messaging + Cloud Functions), qui exige le
+   forfait payant — donc pas inclus ici pour rester gratuit.
+   ========================================================================== */
+if('Notification' in window && Notification.permission === 'default'){
+  // On demande la permission juste après la connexion, une seule fois
+  Notification.requestPermission().catch(()=>{});
+}
+
+// Petit son de notification généré directement (pas de fichier à héberger)
+function playNotificationSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.setValueAtTime(660, ctx.currentTime + 0.09);
+    g.gain.setValueAtTime(0.18, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.35);
+  } catch(e){ /* audio non disponible, on ignore */ }
+}
+
+function notifyNewMessage(fromName, preview){
+  playNotificationSound();
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      new Notification(fromName, { body: preview, icon: 'logo.jpg' });
+    } catch(e){ /* certains navigateurs mobiles limitent les notifications web */ }
+  }
+}
+
+/* ==========================================================================
+   APPELS RÉELS — WebRTC signalé via Firestore (vidéo ET audio)
    (Serveurs STUN publics uniquement : les appels peuvent échouer sur
    certains réseaux 4G/CGNAT très restrictifs sans serveur TURN.)
    ========================================================================== */
@@ -456,17 +576,26 @@ const rtcConfig = {
 let peerConnection = null;
 let localStream = null;
 
-document.getElementById('chat-call-btn').addEventListener('click', () => startCall());
+document.getElementById('chat-call-btn').addEventListener('click', () => startCall('video'));
+document.getElementById('chat-audio-call-btn').addEventListener('click', () => startCall('audio'));
 document.getElementById('hangup-btn').addEventListener('click', () => endCall());
 
-async function startCall(){
+async function startCall(callType){
   if(!activePeer) return;
+  const convRef = await ensureConversationDoc();
   const callId = 'call_' + conversationId(currentUser.uid, activePeer.uid) + '_' + Date.now();
-  await db.collection('conversations').doc(activeConversationId).update({
+
+  // IMPORTANT : on crée d'abord l'offre WebRTC et on l'écrit dans Firestore
+  // AVANT de signaler l'appel à l'autre personne — sinon elle peut essayer
+  // de répondre à une offre qui n'existe pas encore (c'était le bug qui
+  // empêchait la vidéo/l'audio d'arriver jusqu'à l'autre personne).
+  await openCallScreen(callId, true, callType);
+
+  await convRef.update({
     activeCallId: callId,
-    activeCallFrom: currentUser.uid
+    activeCallFrom: currentUser.uid,
+    activeCallType: callType
   });
-  await openCallScreen(callId, true);
 }
 
 function listenForIncomingCalls(){
@@ -477,11 +606,17 @@ function listenForIncomingCalls(){
         const conv = change.data();
         if(conv.activeCallId && conv.activeCallFrom !== currentUser.uid && !document.getElementById('call-screen').classList.contains('show')){
           const peerUid = conv.members.find(m => m !== currentUser.uid);
-          const accept = confirm(`Appel vidéo entrant de ${conv.memberNames[peerUid]}. Répondre ?`);
-          activePeer = { uid: peerUid, name: conv.memberNames[peerUid], username: conv.memberUsernames[peerUid] };
+          const callType = conv.activeCallType || 'video';
+          const accept = confirm(`Appel ${callType === 'audio' ? 'audio' : 'vidéo'} entrant de ${conv.memberNames[peerUid]}. Répondre ?`);
+          activePeer = {
+            uid: peerUid,
+            name: conv.memberNames[peerUid],
+            username: conv.memberUsernames[peerUid],
+            photo: conv.memberPhotos ? conv.memberPhotos[peerUid] : ''
+          };
           activeConversationId = change.doc.id;
           if(accept){
-            openCallScreen(conv.activeCallId, false);
+            openCallScreen(conv.activeCallId, false, callType);
           } else {
             db.collection('conversations').doc(change.doc.id).update({ activeCallId: firebase.firestore.FieldValue.delete() });
           }
@@ -490,18 +625,39 @@ function listenForIncomingCalls(){
     });
 }
 
-async function openCallScreen(callId, isCaller){
+async function openCallScreen(callId, isCaller, callType){
   document.getElementById('call-screen').classList.add('show');
   document.getElementById('call-peer-name').textContent = activePeer.name;
+  document.getElementById('call-status-label').textContent = callType === 'audio' ? 'Appel audio en cours…' : 'Appel vidéo en cours…';
 
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  document.getElementById('local-video').srcObject = localStream;
+  const remoteVideoEl = document.getElementById('remote-video');
+  const localVideoEl = document.getElementById('local-video');
+  const audioAvatar = document.getElementById('audio-call-avatar');
+  const toggleCamBtn = document.getElementById('toggle-cam-btn');
+
+  if(callType === 'audio'){
+    audioAvatar.style.display = 'flex';
+    remoteVideoEl.style.display = 'none';
+    localVideoEl.style.display = 'none';
+    toggleCamBtn.style.display = 'none';
+  } else {
+    audioAvatar.style.display = 'none';
+    remoteVideoEl.style.display = 'block';
+    localVideoEl.style.display = 'block';
+    toggleCamBtn.style.display = 'flex';
+  }
+
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: callType === 'video',
+    audio: true
+  });
+  localVideoEl.srcObject = localStream;
 
   peerConnection = new RTCPeerConnection(rtcConfig);
   localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
   const remoteStream = new MediaStream();
-  document.getElementById('remote-video').srcObject = remoteStream;
+  remoteVideoEl.srcObject = remoteStream;
   peerConnection.ontrack = (event) => {
     event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
   };
@@ -516,7 +672,7 @@ async function openCallScreen(callId, isCaller){
     };
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-    await callDoc.set({ offer: { type: offer.type, sdp: offer.sdp } });
+    await callDoc.set({ offer: { type: offer.type, sdp: offer.sdp }, callType });
 
     callDoc.onSnapshot(async (snap) => {
       const data = snap.data();
@@ -534,8 +690,13 @@ async function openCallScreen(callId, isCaller){
       if(event.candidate) calleeCandidates.add(event.candidate.toJSON());
     };
     const snap = await callDoc.get();
-    const offer = snap.data().offer;
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    const data = snap.data();
+    if(!data || !data.offer){
+      alert("L'appel n'est plus disponible (annulé par l'autre personne).");
+      endCall();
+      return;
+    }
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     await callDoc.update({ answer: { type: answer.type, sdp: answer.sdp } });
@@ -557,6 +718,7 @@ document.getElementById('toggle-mic-btn').addEventListener('click', (e) => {
 document.getElementById('toggle-cam-btn').addEventListener('click', (e) => {
   if(!localStream) return;
   const track = localStream.getVideoTracks()[0];
+  if(!track) return;
   track.enabled = !track.enabled;
   e.currentTarget.style.opacity = track.enabled ? '1' : '0.4';
 });
@@ -569,12 +731,20 @@ function endCall(){
   if(activeConversationId){
     db.collection('conversations').doc(activeConversationId).update({
       activeCallId: firebase.firestore.FieldValue.delete(),
-      activeCallFrom: firebase.firestore.FieldValue.delete()
+      activeCallFrom: firebase.firestore.FieldValue.delete(),
+      activeCallType: firebase.firestore.FieldValue.delete()
     }).catch(()=>{});
   }
 }
 
 /* ---------------------- UTILITAIRES ---------------------- */
+function avatarHtml(photo){
+  if(photo){
+    return `<img class="avatar-photo" src="${photo}" alt="">`;
+  }
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA1B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6"/></svg>`;
+}
+
 function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str || '';
@@ -650,6 +820,14 @@ document.getElementById('post-file-input').addEventListener('change', (e) => {
   document.getElementById('post-picker').textContent = '📷 Changer la photo';
 });
 
+// --- Ouverture / fermeture de l'écran de publication ---
+document.getElementById('open-create-post').addEventListener('click', () => {
+  document.getElementById('create-post-screen').classList.add('show');
+});
+document.getElementById('create-post-back').addEventListener('click', () => {
+  document.getElementById('create-post-screen').classList.remove('show');
+});
+
 document.getElementById('post-publish-btn').addEventListener('click', async () => {
   const statusEl = document.getElementById('post-status');
   const caption = document.getElementById('post-caption').value.trim();
@@ -668,6 +846,7 @@ document.getElementById('post-publish-btn').addEventListener('click', async () =
       uid: currentUser.uid,
       name: currentProfile.name,
       username: currentProfile.username,
+      authorPhoto: currentProfile.photo || '',
       photo, caption,
       likes: 0, likedBy: [], commentsCount: 0,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -680,6 +859,7 @@ document.getElementById('post-publish-btn').addEventListener('click', async () =
     document.getElementById('post-preview').style.display = 'none';
     document.getElementById('post-picker').textContent = '📷 Choisir une photo à publier';
     statusEl.style.display = 'none';
+    document.getElementById('create-post-screen').classList.remove('show');
   } catch(err){
     statusEl.textContent = 'Erreur : ' + err.message;
   }
@@ -702,7 +882,7 @@ function startFeedListener(){
         card.className = 'post-card';
         card.innerHTML = `
           <div class="post-head">
-            <div class="avatar">👤</div>
+            <div class="avatar">${avatarHtml(post.authorPhoto)}</div>
             <div>
               <div class="who">${escapeHtml(post.name || post.username)}</div>
               <div class="meta">@${escapeHtml(post.username)} · ${formatTime(post.createdAt)}</div>
@@ -719,9 +899,20 @@ function startFeedListener(){
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
               <span>${post.commentsCount || 0}</span>
             </div>
+          </div>
+          <div class="comments-section" id="comments-${postId}">
+            <div class="comments-list" id="comments-list-${postId}"></div>
+            <div class="comment-form">
+              <input type="text" id="comment-input-${postId}" placeholder="Écrire un commentaire…">
+              <button type="button" class="send-comment-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+            </div>
           </div>`;
         card.querySelector('.like-btn').addEventListener('click', () => toggleLike(postId, post));
-        card.querySelector('.comment-btn').addEventListener('click', () => addComment(postId));
+        card.querySelector('.comment-btn').addEventListener('click', () => toggleComments(postId));
+        card.querySelector('.send-comment-btn').addEventListener('click', () => submitComment(postId));
+        card.querySelector(`#comment-input-${postId}`).addEventListener('keydown', (e) => {
+          if(e.key === 'Enter'){ e.preventDefault(); submitComment(postId); }
+        });
         feed.appendChild(card);
       });
     }, err => {
@@ -747,13 +938,42 @@ async function toggleLike(postId, post){
   }
 }
 
-async function addComment(postId){
-  const text = prompt('Ton commentaire :');
-  if(!text || !text.trim()) return;
+/* ==========================================================================
+   COMMENTAIRES — section intégrée dans la publication, comme Facebook,
+   plus de fenêtre système moche (prompt/confirm du navigateur).
+   ========================================================================== */
+const openCommentSections = {};
+
+function toggleComments(postId){
+  const section = document.getElementById(`comments-${postId}`);
+  const isOpen = section.classList.toggle('open');
+  if(isOpen && !openCommentSections[postId]){
+    openCommentSections[postId] = db.collection('posts').doc(postId).collection('comments')
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(snap => {
+        const list = document.getElementById(`comments-list-${postId}`);
+        if(!list) return;
+        list.innerHTML = '';
+        snap.forEach(doc => {
+          const c = doc.data();
+          const line = document.createElement('div');
+          line.className = 'comment-line';
+          line.innerHTML = `<b>@${escapeHtml(c.username)}</b><p>${escapeHtml(c.text)}</p>`;
+          list.appendChild(line);
+        });
+      });
+  }
+}
+
+async function submitComment(postId){
+  const input = document.getElementById(`comment-input-${postId}`);
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
   await db.collection('posts').doc(postId).collection('comments').add({
     uid: currentUser.uid,
     username: currentProfile.username,
-    text: text.trim(),
+    text,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
   await db.collection('posts').doc(postId).update({
