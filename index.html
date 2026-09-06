@@ -348,6 +348,28 @@
     display:flex; align-items:center; justify-content:center;
   }
   .avatar-photo{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+  .stat-row{ display:flex; justify-content:center; gap:26px; margin-top:16px; }
+  .stat b{ display:block; font-family:'Space Grotesk',sans-serif; font-size:16px; }
+  .stat span{ font-size:10.5px; color:var(--text-low); }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:12px; }
+  .grid3 .cell{
+    position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+    background: var(--bg-panel-2); cursor:pointer;
+  }
+  .grid3 .cell img{ width:100%; height:100%; object-fit:cover; }
+  .grid3 .cell .cell-likes{
+    position:absolute; bottom:4px; left:5px; color:#fff; font-size:10.5px;
+    display:flex; align-items:center; gap:3px; text-shadow:0 1px 3px rgba(0,0,0,0.7);
+  }
+  .pulse-btn{ animation: pulse-glow 2.4s ease-in-out infinite; }
+  @keyframes pulse-glow{
+    0%,100%{ box-shadow:0 4px 16px -3px rgba(224,20,30,0.35); }
+    50%{ box-shadow:0 4px 22px -2px rgba(224,20,30,0.6); }
+  }
+  @keyframes rec-pulse{
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:0.35; transform:scale(0.8); }
+  }
 
   /* ---------- BOTTOM NAV ---------- */
   .navbar{
@@ -470,13 +492,22 @@
   <div class="overlay-body" id="chat-messages"></div>
   <div class="overlay-foot">
     <form id="chat-send-form">
+      <input type="file" id="chat-photo-input" accept="image/*" style="display:none;">
+      <div class="icon-btn" id="chat-photo-btn" title="Envoyer une photo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 15l-5-5-9 9"/></svg>
+      </div>
       <div class="icon-btn" id="chat-mic-btn" title="Message vocal">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
       </div>
       <input type="text" id="chat-input" placeholder="Écrire un message…" autocomplete="off">
+      <div id="recording-bar" style="display:none; flex:1; align-items:center; gap:9px; padding:0 4px;">
+        <span id="recording-dot" style="width:10px; height:10px; border-radius:50%; background:var(--magenta); animation: rec-pulse 1s ease-in-out infinite;"></span>
+        <span style="font-size:13px; color:var(--text-mid); font-variant-numeric:tabular-nums;" id="recording-timer">0:00</span>
+        <span style="flex:1; font-size:11.5px; color:var(--text-low);">Touche le micro pour envoyer</span>
+      </div>
       <button type="submit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
     </form>
-    <div id="recording-indicator" style="display:none; text-align:center; font-size:12px; color:var(--magenta); padding-top:8px;">🔴 Enregistrement… touche à nouveau le micro pour envoyer</div>
+    <div id="photo-send-status" style="display:none; text-align:center; font-size:12px; color:var(--text-mid); padding-top:8px;">Envoi de la photo…</div>
   </div>
 </div>
 
@@ -489,10 +520,24 @@
     <b>Nouvelle publication</b>
   </div>
   <div class="overlay-body">
-    <input type="file" id="post-file-input" accept="image/*" style="display:none;">
-    <div class="compose-picker" id="post-picker">📷 Choisir une photo à publier</div>
-    <img id="post-preview" alt="Aperçu">
-    <input type="text" id="post-caption" placeholder="Écrire une légende…" style="width:100%; padding:12px 14px; border-radius:13px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); font-size:14px; outline:none; margin-top:12px;">
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <div class="btn primary glossy" id="mode-photo-btn" style="flex:1; padding:10px;">📷 Photo</div>
+      <div class="btn ghost" id="mode-video-btn" style="flex:1; padding:10px;">🎥 Vidéo courte</div>
+    </div>
+
+    <div id="photo-mode-block">
+      <input type="file" id="post-file-input" accept="image/*" style="display:none;">
+      <div class="compose-picker" id="post-picker">📷 Choisir une photo à publier</div>
+      <img id="post-preview" alt="Aperçu">
+    </div>
+
+    <div id="video-mode-block" style="display:none;">
+      <div class="meta" style="margin-bottom:8px;">Enregistrement direct uniquement, 8 secondes maximum (limite technique pour rester gratuit — l'import d'une vidéo depuis la galerie n'est pas possible).</div>
+      <video id="video-record-preview" muted playsinline style="width:100%; border-radius:14px; background:#000; max-height:280px; display:none;"></video>
+      <div class="btn primary glossy" id="video-record-btn" style="padding:12px; text-align:center;">🎥 Démarrer l'enregistrement</div>
+    </div>
+
+    <input type="text" id="post-caption" placeholder="Écrire une légende…" style="width:100%; padding:12px 14px; border-radius:13px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); font-size:14px; outline:none; margin-top:14px;">
     <div class="btn primary glossy" id="post-publish-btn" style="margin-top:14px; padding:13px;">Publier</div>
     <div class="meta" id="post-status" style="padding-top:8px; display:none;"></div>
   </div>
@@ -531,9 +576,10 @@
 
       <!-- FIL -->
       <div class="view active" id="view-feed">
-        <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-          <div id="open-create-post" class="glossy" style="cursor:pointer; width:44px; height:44px; border-radius:50%; background:var(--grad-aura); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px -4px rgba(20,22,31,0.25);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12141c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:12px;">
+          <span class="meta" style="padding:0;">Publier une photo ou une courte vidéo</span>
+          <div id="open-create-post" class="glossy pulse-btn" style="cursor:pointer; width:46px; height:46px; border-radius:50%; background:var(--grad-aura); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px -3px rgba(224,20,30,0.35);">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#12141c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           </div>
         </div>
         <div id="feed-posts">
@@ -568,10 +614,17 @@
           <div class="meta" style="text-align:center; margin-top:6px;">Touche ta photo pour la changer</div>
           <div class="p-name" id="profile-name">—</div>
           <div class="p-handle" id="profile-handle">—</div>
+          <div class="stat-row">
+            <div class="stat"><b id="stat-posts">0</b><span>publications</span></div>
+            <div class="stat"><b id="stat-likes">0</b><span>likes reçus</span></div>
+            <div class="stat"><b id="stat-comments">0</b><span>commentaires</span></div>
+          </div>
           <div class="p-actions">
             <div class="btn ghost" id="logout-btn">Se déconnecter</div>
           </div>
         </div>
+        <div class="section-label" style="margin-top:22px;">Mes publications</div>
+        <div class="grid3" id="my-posts-grid"></div>
       </div>
 
     </div>
