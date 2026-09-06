@@ -14,7 +14,7 @@ let unsubMessages = null;
 let unsubIncomingCall = null;
 let activeConversationId = null;
 let activePeer = null;        // { uid, name, username }
-let unsubVibeFeed = null;
+let unsubFeedPosts = null;
 
 /* ---------------------- NAVIGATION BAS DE PAGE ---------------------- */
 const navItems = document.querySelectorAll('.nav-item');
@@ -188,13 +188,13 @@ auth.onAuthStateChanged(async (user) => {
     applyProfile(currentProfile);
     document.getElementById('auth-screen').classList.remove('show');
     startConversationsListener();
-    startVibeFeedListener();
+    startFeedListener();
     listenForIncomingCalls();
   } else {
     currentUser = null;
     currentProfile = null;
     if(unsubConversations) unsubConversations();
-    if(unsubVibeFeed) unsubVibeFeed();
+    if(unsubFeedPosts) unsubFeedPosts();
     if(unsubIncomingCall) unsubIncomingCall();
     document.getElementById('auth-screen').classList.add('show');
   }
@@ -584,4 +584,179 @@ function formatTime(ts){
   if(!ts || !ts.toDate) return '';
   const d = ts.toDate();
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+/* ==========================================================================
+   FIL DE PUBLICATIONS — photos réelles + likes réels
+   Aucune simulation : les photos sont redimensionnées/compressées sur le
+   téléphone puis stockées directement dans Firestore (comme la photo de
+   profil), donc pas besoin de Firebase Storage payant. Les likes et le
+   nombre de commentaires sont de vrais compteurs partagés entre tous les
+   utilisateurs, mis à jour en temps réel.
+   ========================================================================== */
+function resizeImageKeepAspect(file, maxDim = 900, quality = 0.72){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if(width >= height){
+          if(width > maxDim){ height = Math.round(height * (maxDim / width)); width = maxDim; }
+        } else {
+          if(height > maxDim){ width = Math.round(width * (maxDim / height)); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Compresse jusqu'à tenir sous la limite de taille d'un document Firestore
+async function compressPostImage(file){
+  const MAX_CHARS = 850000; // marge de sécurité sous la limite de 1 Mo de Firestore
+  let quality = 0.72;
+  let dataUrl = await resizeImageKeepAspect(file, 900, quality);
+  while(dataUrl.length > MAX_CHARS && quality > 0.3){
+    quality -= 0.12;
+    dataUrl = await resizeImageKeepAspect(file, 900, quality);
+  }
+  if(dataUrl.length > MAX_CHARS){
+    dataUrl = await resizeImageKeepAspect(file, 650, 0.5);
+  }
+  return dataUrl;
+}
+
+let selectedPostFile = null;
+
+document.getElementById('post-picker').addEventListener('click', () => {
+  document.getElementById('post-file-input').click();
+});
+
+document.getElementById('post-file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  selectedPostFile = file;
+  const preview = document.getElementById('post-preview');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  document.getElementById('post-picker').textContent = '📷 Changer la photo';
+});
+
+document.getElementById('post-publish-btn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('post-status');
+  const caption = document.getElementById('post-caption').value.trim();
+
+  if(!selectedPostFile){ alert('Choisis une photo à publier.'); return; }
+  if(!currentUser){ alert('Connecte-toi pour publier.'); return; }
+
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Préparation de la photo…';
+
+  try{
+    const photo = await compressPostImage(selectedPostFile);
+    statusEl.textContent = 'Publication…';
+
+    await db.collection('posts').add({
+      uid: currentUser.uid,
+      name: currentProfile.name,
+      username: currentProfile.username,
+      photo, caption,
+      likes: 0, likedBy: [], commentsCount: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // reset du formulaire
+    selectedPostFile = null;
+    document.getElementById('post-file-input').value = '';
+    document.getElementById('post-caption').value = '';
+    document.getElementById('post-preview').style.display = 'none';
+    document.getElementById('post-picker').textContent = '📷 Choisir une photo à publier';
+    statusEl.style.display = 'none';
+  } catch(err){
+    statusEl.textContent = 'Erreur : ' + err.message;
+  }
+});
+
+function startFeedListener(){
+  const feed = document.getElementById('feed-posts');
+  unsubFeedPosts = db.collection('posts').orderBy('createdAt', 'desc').limit(30)
+    .onSnapshot(snap => {
+      if(snap.empty){
+        feed.innerHTML = '<div class="meta" style="padding:20px 4px;">Aucune publication pour l\'instant — sois le premier ✦</div>';
+        return;
+      }
+      feed.innerHTML = '';
+      snap.forEach(doc => {
+        const post = doc.data();
+        const postId = doc.id;
+        const liked = currentUser && post.likedBy && post.likedBy.includes(currentUser.uid);
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        card.innerHTML = `
+          <div class="post-head">
+            <div class="avatar">👤</div>
+            <div>
+              <div class="who">${escapeHtml(post.name || post.username)}</div>
+              <div class="meta">@${escapeHtml(post.username)} · ${formatTime(post.createdAt)}</div>
+            </div>
+          </div>
+          <img class="post-photo" src="${post.photo}" alt="">
+          ${post.caption ? `<div class="post-caption">${escapeHtml(post.caption)}</div>` : ''}
+          <div class="post-actions">
+            <div class="post-act like-btn ${liked ? 'liked' : ''}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+              <span>${post.likes || 0}</span>
+            </div>
+            <div class="post-act comment-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              <span>${post.commentsCount || 0}</span>
+            </div>
+          </div>`;
+        card.querySelector('.like-btn').addEventListener('click', () => toggleLike(postId, post));
+        card.querySelector('.comment-btn').addEventListener('click', () => addComment(postId));
+        feed.appendChild(card);
+      });
+    }, err => {
+      console.error('Fil:', err);
+      feed.innerHTML = '<div class="meta" style="padding:14px 4px; color:var(--magenta);">Erreur de chargement du fil : ' + escapeHtml(err.message) + '</div>';
+    });
+}
+
+async function toggleLike(postId, post){
+  if(!currentUser) return;
+  const ref = db.collection('posts').doc(postId);
+  const liked = post.likedBy && post.likedBy.includes(currentUser.uid);
+  if(liked){
+    await ref.update({
+      likes: firebase.firestore.FieldValue.increment(-1),
+      likedBy: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+    });
+  } else {
+    await ref.update({
+      likes: firebase.firestore.FieldValue.increment(1),
+      likedBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+    });
+  }
+}
+
+async function addComment(postId){
+  const text = prompt('Ton commentaire :');
+  if(!text || !text.trim()) return;
+  await db.collection('posts').doc(postId).collection('comments').add({
+    uid: currentUser.uid,
+    username: currentProfile.username,
+    text: text.trim(),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  await db.collection('posts').doc(postId).update({
+    commentsCount: firebase.firestore.FieldValue.increment(1)
+  });
 }
