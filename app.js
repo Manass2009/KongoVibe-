@@ -189,12 +189,14 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('auth-screen').classList.remove('show');
     startConversationsListener();
     startFeedListener();
+    startMyPostsListener();
     listenForIncomingCalls();
   } else {
     currentUser = null;
     currentProfile = null;
     if(unsubConversations) unsubConversations();
     if(unsubFeedPosts) unsubFeedPosts();
+    if(unsubMyPosts) unsubMyPosts();
     if(unsubIncomingCall) unsubIncomingCall();
     document.getElementById('auth-screen').classList.add('show');
   }
@@ -410,14 +412,27 @@ function openChatThread(peer){
         const m = doc.data();
         const mine = m.senderId === currentUser.uid;
         const bubble = document.createElement('div');
-        bubble.style.cssText = `max-width:75%; margin:6px 0; padding:${m.type === 'audio' ? '8px 10px' : '10px 13px'}; border-radius:16px; font-size:13.5px; line-height:1.4; ${mine ? 'margin-left:auto; background:var(--grad-aura); color:#12141c;' : 'background:var(--bg-panel); border:1px solid var(--line);'}`;
+        const isMedia = m.type === 'audio' || m.type === 'image' || m.type === 'video';
+        bubble.style.cssText = `max-width:75%; margin:6px 0; padding:${isMedia && m.type !== 'audio' ? '4px' : '8px 10px'}; border-radius:16px; font-size:13.5px; line-height:1.4; ${mine ? 'margin-left:auto; background:var(--grad-aura); color:#12141c;' : 'background:var(--bg-panel); border:1px solid var(--line);'}`;
         if(m.type === 'audio' && m.audio){
           const audio = document.createElement('audio');
           audio.controls = true;
           audio.src = m.audio;
           audio.style.cssText = 'width:210px; height:34px; display:block;';
           bubble.appendChild(audio);
+        } else if(m.type === 'image' && m.image){
+          const img = document.createElement('img');
+          img.src = m.image;
+          img.style.cssText = 'max-width:220px; border-radius:12px; display:block;';
+          bubble.appendChild(img);
+        } else if(m.type === 'video' && m.video){
+          const vid = document.createElement('video');
+          vid.src = m.video;
+          vid.controls = true;
+          vid.style.cssText = 'max-width:220px; border-radius:12px; display:block;';
+          bubble.appendChild(vid);
         } else {
+          bubble.style.padding = '10px 13px';
           bubble.textContent = m.text;
         }
         box.appendChild(bubble);
@@ -469,14 +484,58 @@ document.getElementById('chat-send-form').addEventListener('submit', async (e) =
   });
 });
 
+/* ---------------------- ENVOYER UNE PHOTO DANS LE CHAT ---------------------- */
+document.getElementById('chat-photo-btn').addEventListener('click', () => {
+  if(!activeConversationId) return;
+  document.getElementById('chat-photo-input').click();
+});
+
+document.getElementById('chat-photo-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file || !activeConversationId) return;
+  const statusEl = document.getElementById('photo-send-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Envoi de la photo…';
+  try{
+    const photo = await resizeImageKeepAspect(file, 800, 0.65);
+    const convRef = await ensureConversationDoc();
+    await convRef.update({
+      lastMessage: '📷 Photo',
+      lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSenderId: currentUser.uid
+    });
+    await convRef.collection('messages').add({
+      senderId: currentUser.uid,
+      type: 'image',
+      image: photo,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(err){
+    alert("Impossible d'envoyer cette photo : " + err.message);
+  } finally {
+    statusEl.style.display = 'none';
+    e.target.value = '';
+  }
+});
+
 /* ==========================================================================
    MESSAGES VOCAUX — vrai enregistrement micro, stocké en base64 dans
    Firestore (même principe que les photos), donc gratuit. Limité à 60
    secondes pour rester largement sous la limite de taille d'un document.
+   L'interface remplace le champ de texte par une barre d'enregistrement
+   en direct (point rouge + minuteur), comme WhatsApp.
    ========================================================================== */
 let mediaRecorder = null;
 let recordedChunks = [];
-let recordingTimer = null;
+let recordingMaxTimer = null;
+let recordingClockInterval = null;
+let recordingSeconds = 0;
+
+function updateRecordingClock(){
+  const m = Math.floor(recordingSeconds / 60);
+  const s = recordingSeconds % 60;
+  document.getElementById('recording-timer').textContent = m + ':' + String(s).padStart(2, '0');
+}
 
 document.getElementById('chat-mic-btn').addEventListener('click', async () => {
   if(!activeConversationId){ return; }
@@ -491,9 +550,14 @@ document.getElementById('chat-mic-btn').addEventListener('click', async () => {
     mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
     mediaRecorder.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
-      clearTimeout(recordingTimer);
-      document.getElementById('recording-indicator').style.display = 'none';
+      clearTimeout(recordingMaxTimer);
+      clearInterval(recordingClockInterval);
+      recordingSeconds = 0;
+      document.getElementById('recording-bar').style.display = 'none';
+      document.getElementById('chat-input').style.display = 'block';
+      document.getElementById('chat-photo-btn').style.display = 'flex';
       document.getElementById('chat-mic-btn').style.color = '';
+      document.getElementById('chat-mic-btn').style.background = '';
 
       const blob = new Blob(recordedChunks, { type: 'audio/webm' });
       const audioBase64 = await new Promise((resolve, reject) => {
@@ -517,10 +581,22 @@ document.getElementById('chat-mic-btn').addEventListener('click', async () => {
       });
     };
     mediaRecorder.start();
-    document.getElementById('recording-indicator').style.display = 'block';
-    document.getElementById('chat-mic-btn').style.color = 'var(--magenta)';
+
+    // Bascule visuelle : le champ de texte disparaît, la barre d'enregistrement apparaît
+    document.getElementById('chat-input').style.display = 'none';
+    document.getElementById('chat-photo-btn').style.display = 'none';
+    document.getElementById('recording-bar').style.display = 'flex';
+    document.getElementById('chat-mic-btn').style.color = '#fff';
+    document.getElementById('chat-mic-btn').style.background = 'var(--magenta)';
+    recordingSeconds = 0;
+    updateRecordingClock();
+    recordingClockInterval = setInterval(() => {
+      recordingSeconds++;
+      updateRecordingClock();
+    }, 1000);
+
     // Coupure automatique à 60s pour rester sous la limite Firestore
-    recordingTimer = setTimeout(() => {
+    recordingMaxTimer = setTimeout(() => {
       if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
     }, 60000);
   } catch(err){
@@ -565,6 +641,39 @@ function notifyNewMessage(fromName, preview){
   }
 }
 
+/* ---------------------- SONNERIE D'APPEL (universelle) ---------------------- */
+let ringInterval = null;
+let ringCtx = null;
+
+function startRingtone(){
+  stopRingtone();
+  try{
+    ringCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ringOnce = () => {
+      if(!ringCtx) return;
+      [0, 0.4].forEach(delay => {
+        const o = ringCtx.createOscillator();
+        const g = ringCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(440, ringCtx.currentTime + delay);
+        g.gain.setValueAtTime(0.001, ringCtx.currentTime + delay);
+        g.gain.linearRampToValueAtTime(0.16, ringCtx.currentTime + delay + 0.05);
+        g.gain.linearRampToValueAtTime(0.001, ringCtx.currentTime + delay + 0.35);
+        o.connect(g); g.connect(ringCtx.destination);
+        o.start(ringCtx.currentTime + delay);
+        o.stop(ringCtx.currentTime + delay + 0.35);
+      });
+    };
+    ringOnce();
+    ringInterval = setInterval(ringOnce, 2000);
+  } catch(e){ /* audio non disponible */ }
+}
+
+function stopRingtone(){
+  if(ringInterval){ clearInterval(ringInterval); ringInterval = null; }
+  if(ringCtx){ ringCtx.close().catch(()=>{}); ringCtx = null; }
+}
+
 /* ==========================================================================
    APPELS RÉELS — WebRTC signalé via Firestore (vidéo ET audio)
    (Serveurs STUN publics uniquement : les appels peuvent échouer sur
@@ -607,7 +716,9 @@ function listenForIncomingCalls(){
         if(conv.activeCallId && conv.activeCallFrom !== currentUser.uid && !document.getElementById('call-screen').classList.contains('show')){
           const peerUid = conv.members.find(m => m !== currentUser.uid);
           const callType = conv.activeCallType || 'video';
+          startRingtone();
           const accept = confirm(`Appel ${callType === 'audio' ? 'audio' : 'vidéo'} entrant de ${conv.memberNames[peerUid]}. Répondre ?`);
+          stopRingtone();
           activePeer = {
             uid: peerUid,
             name: conv.memberNames[peerUid],
@@ -673,10 +784,13 @@ async function openCallScreen(callId, isCaller, callType){
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     await callDoc.set({ offer: { type: offer.type, sdp: offer.sdp }, callType });
+    startRingtone(); // ça sonne chez l'appelant tant que l'autre n'a pas décroché
 
     callDoc.onSnapshot(async (snap) => {
       const data = snap.data();
       if(data && data.answer && peerConnection.currentRemoteDescription === null){
+        stopRingtone();
+        document.getElementById('call-status-label').textContent = callType === 'audio' ? 'Appel audio connecté' : 'Appel vidéo connecté';
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
       }
     });
@@ -805,6 +919,11 @@ async function compressPostImage(file){
 }
 
 let selectedPostFile = null;
+let postMode = 'photo'; // 'photo' ou 'video'
+let videoRecordStream = null;
+let postVideoRecorder = null;
+let postVideoChunks = [];
+let recordedVideoBlob = null;
 
 document.getElementById('post-picker').addEventListener('click', () => {
   document.getElementById('post-file-input').click();
@@ -820,50 +939,139 @@ document.getElementById('post-file-input').addEventListener('change', (e) => {
   document.getElementById('post-picker').textContent = '📷 Changer la photo';
 });
 
+// --- Bascule Photo / Vidéo courte ---
+document.getElementById('mode-photo-btn').addEventListener('click', () => {
+  postMode = 'photo';
+  document.getElementById('mode-photo-btn').className = 'btn primary glossy';
+  document.getElementById('mode-video-btn').className = 'btn ghost';
+  document.getElementById('photo-mode-block').style.display = 'block';
+  document.getElementById('video-mode-block').style.display = 'none';
+});
+document.getElementById('mode-video-btn').addEventListener('click', () => {
+  postMode = 'video';
+  document.getElementById('mode-video-btn').className = 'btn primary glossy';
+  document.getElementById('mode-photo-btn').className = 'btn ghost';
+  document.getElementById('photo-mode-block').style.display = 'none';
+  document.getElementById('video-mode-block').style.display = 'block';
+});
+
+// --- Enregistrement vidéo courte (8s max, direct uniquement) ---
+document.getElementById('video-record-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('video-record-btn');
+  const preview = document.getElementById('video-record-preview');
+
+  if(postVideoRecorder && postVideoRecorder.state === 'recording'){
+    postVideoRecorder.stop();
+    return;
+  }
+
+  try{
+    videoRecordStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 480, height: 480 }, audio: true
+    });
+    preview.srcObject = videoRecordStream;
+    preview.style.display = 'block';
+    preview.muted = true;
+    preview.play();
+
+    postVideoChunks = [];
+    postVideoRecorder = new MediaRecorder(videoRecordStream, { videoBitsPerSecond: 250000 });
+    postVideoRecorder.ondataavailable = (e) => { if(e.data.size > 0) postVideoChunks.push(e.data); };
+    postVideoRecorder.onstop = () => {
+      videoRecordStream.getTracks().forEach(t => t.stop());
+      recordedVideoBlob = new Blob(postVideoChunks, { type: 'video/webm' });
+      preview.srcObject = null;
+      preview.src = URL.createObjectURL(recordedVideoBlob);
+      preview.muted = false;
+      preview.controls = true;
+      btn.textContent = '🎥 Recommencer';
+    };
+    postVideoRecorder.start();
+    btn.textContent = '⏹ Arrêter (8s max)';
+
+    setTimeout(() => {
+      if(postVideoRecorder && postVideoRecorder.state === 'recording') postVideoRecorder.stop();
+    }, 8000);
+  } catch(err){
+    alert("Impossible d'accéder à la caméra : " + err.message);
+  }
+});
+
 // --- Ouverture / fermeture de l'écran de publication ---
 document.getElementById('open-create-post').addEventListener('click', () => {
   document.getElementById('create-post-screen').classList.add('show');
 });
 document.getElementById('create-post-back').addEventListener('click', () => {
   document.getElementById('create-post-screen').classList.remove('show');
+  if(postVideoRecorder && postVideoRecorder.state === 'recording') postVideoRecorder.stop();
 });
 
 document.getElementById('post-publish-btn').addEventListener('click', async () => {
   const statusEl = document.getElementById('post-status');
   const caption = document.getElementById('post-caption').value.trim();
-
-  if(!selectedPostFile){ alert('Choisis une photo à publier.'); return; }
   if(!currentUser){ alert('Connecte-toi pour publier.'); return; }
 
-  statusEl.style.display = 'block';
-  statusEl.textContent = 'Préparation de la photo…';
-
-  try{
-    const photo = await compressPostImage(selectedPostFile);
-    statusEl.textContent = 'Publication…';
-
-    await db.collection('posts').add({
-      uid: currentUser.uid,
-      name: currentProfile.name,
-      username: currentProfile.username,
-      authorPhoto: currentProfile.photo || '',
-      photo, caption,
-      likes: 0, likedBy: [], commentsCount: 0,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // reset du formulaire
-    selectedPostFile = null;
-    document.getElementById('post-file-input').value = '';
-    document.getElementById('post-caption').value = '';
-    document.getElementById('post-preview').style.display = 'none';
-    document.getElementById('post-picker').textContent = '📷 Choisir une photo à publier';
-    statusEl.style.display = 'none';
-    document.getElementById('create-post-screen').classList.remove('show');
-  } catch(err){
-    statusEl.textContent = 'Erreur : ' + err.message;
+  if(postMode === 'photo'){
+    if(!selectedPostFile){ alert('Choisis une photo à publier.'); return; }
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Préparation de la photo…';
+    try{
+      const photo = await compressPostImage(selectedPostFile);
+      statusEl.textContent = 'Publication…';
+      await db.collection('posts').add({
+        uid: currentUser.uid, name: currentProfile.name, username: currentProfile.username,
+        authorPhoto: currentProfile.photo || '', type: 'photo',
+        photo, caption, likes: 0, likedBy: [], commentsCount: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      resetPostForm();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+    }
+  } else {
+    if(!recordedVideoBlob){ alert('Enregistre une courte vidéo avant de publier.'); return; }
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Préparation de la vidéo…';
+    try{
+      const videoBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(recordedVideoBlob);
+      });
+      if(videoBase64.length > 900000){
+        statusEl.textContent = 'Cette vidéo est trop lourde pour être publiée gratuitement. Réessaie avec un clip plus court ou moins de mouvement.';
+        return;
+      }
+      statusEl.textContent = 'Publication…';
+      await db.collection('posts').add({
+        uid: currentUser.uid, name: currentProfile.name, username: currentProfile.username,
+        authorPhoto: currentProfile.photo || '', type: 'video',
+        video: videoBase64, caption, likes: 0, likedBy: [], commentsCount: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      resetPostForm();
+    } catch(err){
+      statusEl.textContent = 'Erreur : ' + err.message;
+    }
   }
 });
+
+function resetPostForm(){
+  selectedPostFile = null;
+  recordedVideoBlob = null;
+  document.getElementById('post-file-input').value = '';
+  document.getElementById('post-caption').value = '';
+  document.getElementById('post-preview').style.display = 'none';
+  document.getElementById('post-picker').textContent = '📷 Choisir une photo à publier';
+  const videoPreview = document.getElementById('video-record-preview');
+  videoPreview.style.display = 'none';
+  videoPreview.removeAttribute('src');
+  document.getElementById('video-record-btn').textContent = "🎥 Démarrer l'enregistrement";
+  document.getElementById('post-status').style.display = 'none';
+  document.getElementById('create-post-screen').classList.remove('show');
+  document.getElementById('mode-photo-btn').click();
+}
 
 function startFeedListener(){
   const feed = document.getElementById('feed-posts');
@@ -888,7 +1096,9 @@ function startFeedListener(){
               <div class="meta">@${escapeHtml(post.username)} · ${formatTime(post.createdAt)}</div>
             </div>
           </div>
-          <img class="post-photo" src="${post.photo}" alt="">
+          ${post.type === 'video' && post.video
+            ? `<video class="post-photo" src="${post.video}" controls playsinline></video>`
+            : `<img class="post-photo" src="${post.photo}" alt="">`}
           ${post.caption ? `<div class="post-caption">${escapeHtml(post.caption)}</div>` : ''}
           <div class="post-actions">
             <div class="post-act like-btn ${liked ? 'liked' : ''}">
@@ -919,6 +1129,61 @@ function startFeedListener(){
       console.error('Fil:', err);
       feed.innerHTML = '<div class="meta" style="padding:14px 4px; color:var(--magenta);">Erreur de chargement du fil : ' + escapeHtml(err.message) + '</div>';
     });
+}
+
+/* ==========================================================================
+   PROFIL FAÇON TIKTOK — mes publications, mes stats réelles (likes,
+   commentaires), et une vraie notification quand quelqu'un aime une
+   publication. Tout est calculé à partir des vraies données Firestore.
+   ========================================================================== */
+let unsubMyPosts = null;
+let knownLikeCounts = {}; // pour détecter une VRAIE augmentation de likes
+
+function startMyPostsListener(){
+  if(!currentUser) return;
+  unsubMyPosts = db.collection('posts').where('uid', '==', currentUser.uid)
+    .onSnapshot(snap => {
+      let totalLikes = 0, totalComments = 0;
+      const grid = document.getElementById('my-posts-grid');
+      grid.innerHTML = '';
+
+      const docs = snap.docs.slice().sort((a, b) => {
+        const ta = a.data().createdAt ? a.data().createdAt.toMillis() : 0;
+        const tb = b.data().createdAt ? b.data().createdAt.toMillis() : 0;
+        return tb - ta;
+      });
+
+      docs.forEach(doc => {
+        const post = doc.data();
+        totalLikes += post.likes || 0;
+        totalComments += post.commentsCount || 0;
+
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const thumbSrc = post.type === 'video' ? '' : post.photo;
+        cell.innerHTML = `
+          ${post.type === 'video'
+            ? `<video src="${post.video}" muted></video>`
+            : `<img src="${thumbSrc}" alt="">`}
+          <div class="cell-likes">♥ ${post.likes || 0}</div>`;
+        grid.appendChild(cell);
+
+        // --- Notification réelle : quelqu'un a aimé ma publication ---
+        const prevLikes = knownLikeCounts[doc.id];
+        if(prevLikes !== undefined && (post.likes || 0) > prevLikes){
+          notifyNewMessage('Nouveau like ✦', 'Quelqu\'un a aimé ta publication');
+        }
+        knownLikeCounts[doc.id] = post.likes || 0;
+      });
+
+      document.getElementById('stat-posts').textContent = docs.length;
+      document.getElementById('stat-likes').textContent = totalLikes;
+      document.getElementById('stat-comments').textContent = totalComments;
+
+      if(docs.length === 0){
+        grid.innerHTML = '<div class="meta" style="padding:10px 4px; grid-column: span 3;">Tu n\'as encore rien publié.</div>';
+      }
+    }, err => console.error('Mes publications:', err));
 }
 
 async function toggleLike(postId, post){
