@@ -76,12 +76,12 @@ function normalizePhone(p){
 }
 
 // Firebase Authentication a besoin techniquement d'une adresse e-mail.
-// Comme on reste sur le forfait gratuit (pas de vérification SMS payante),
-// on fabrique un e-mail interne à partir du numéro — invisible pour la
-// personne, qui ne voit et ne saisit que son numéro de téléphone.
-// Important : ce numéro n'est PAS vérifié par SMS, contrairement à WhatsApp.
-function phoneToInternalEmail(phone){
-  return normalizePhone(phone).replace('+', '') + '@kongovibe.local';
+// On la fabrique à partir du NOM D'UTILISATEUR (unique) plutôt que du
+// numéro de téléphone — ça permet à un même numéro d'être utilisé sur
+// plusieurs comptes différents, utile pour tester avec un seul téléphone.
+// Le numéro est stocké séparément, juste comme information de profil.
+function usernameToInternalEmail(username){
+  return username + '@kongovibe.local';
 }
 
 // --- Inscription ---
@@ -91,7 +91,7 @@ registerForm.addEventListener('submit', async (e) => {
   const name = document.getElementById('reg-name').value.trim();
   const username = normalizeUsername(document.getElementById('reg-username').value);
   const phone = normalizePhone(document.getElementById('reg-contact').value);
-  const internalEmail = phoneToInternalEmail(phone);
+  const internalEmail = usernameToInternalEmail(username);
   const password = document.getElementById('reg-password').value;
   usernameError.style.display = 'none';
 
@@ -113,6 +113,7 @@ registerForm.addEventListener('submit', async (e) => {
     const profile = {
       uid, name, username, phone,
       email: internalEmail, // usage interne uniquement, jamais affiché
+      photo: '', // rempli plus tard si la personne ajoute une photo
       bio: '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -130,22 +131,21 @@ registerForm.addEventListener('submit', async (e) => {
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const submitBtn = loginForm.querySelector('.auth-submit');
-  const usernameOrPhone = document.getElementById('log-username').value.trim();
+  const usernameOrEmail = document.getElementById('log-username').value.trim();
   const password = document.getElementById('log-password').value;
   loginError.style.display = 'none';
   submitBtn.textContent = 'Connexion en cours…';
 
   try{
     let email;
-    if(usernameOrPhone.includes('@')){
+    if(usernameOrEmail.includes('@')){
       // compte créé avec l'ancien système (e-mail direct)
-      email = usernameOrPhone;
-    } else if(/^[+0-9]+$/.test(usernameOrPhone)){
-      // saisi comme numéro de téléphone
-      email = phoneToInternalEmail(usernameOrPhone);
+      email = usernameOrEmail;
     } else {
       // saisi comme nom d'utilisateur : on résout via Firestore
-      const uDoc = await db.collection('usernames').doc(normalizeUsername(usernameOrPhone)).get();
+      // (le numéro de téléphone n'est plus utilisable pour se connecter,
+      // car plusieurs comptes peuvent maintenant partager le même numéro)
+      const uDoc = await db.collection('usernames').doc(normalizeUsername(usernameOrEmail)).get();
       if(!uDoc.exists){ throw { code: 'auth/user-not-found' }; }
       const userDoc = await db.collection('users').doc(uDoc.data().uid).get();
       email = userDoc.data().email;
@@ -205,7 +205,67 @@ function applyProfile(profile){
   const handleEl = document.getElementById('profile-handle');
   if(nameEl) nameEl.textContent = profile.name;
   if(handleEl) handleEl.textContent = '@' + profile.username;
+
+  const img = document.getElementById('profile-avatar-img');
+  const fallback = document.getElementById('profile-avatar-fallback');
+  if(profile.photo){
+    img.src = profile.photo;
+    img.style.display = 'block';
+    fallback.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    fallback.style.display = 'flex';
+  }
 }
+
+/* ==========================================================================
+   PHOTO DE PROFIL — redimensionnée sur l'appareil, stockée directement
+   dans Firestore (en base64). Aucun besoin de Firebase Storage ni d'API
+   Google séparée : une petite image (mini format) tient largement dans un
+   document Firestore, donc ça reste 100% gratuit.
+   ========================================================================== */
+function resizeImageToBase64(file, maxSize = 200, quality = 0.75){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        // recadrage carré centré
+        const side = Math.min(width, height);
+        const sx = (width - side) / 2;
+        const sy = (height - side) / 2;
+        canvas.width = maxSize;
+        canvas.height = maxSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, maxSize, maxSize);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('profile-avatar-wrap').addEventListener('click', () => {
+  document.getElementById('avatar-file-input').click();
+});
+
+document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file || !currentUser) return;
+  try{
+    const dataUrl = await resizeImageToBase64(file);
+    await db.collection('users').doc(currentUser.uid).update({ photo: dataUrl });
+    currentProfile.photo = dataUrl;
+    applyProfile(currentProfile);
+  } catch(err){
+    alert("Impossible de charger cette image : " + err.message);
+  }
+});
 
 /* ==========================================================================
    MESSAGERIE RÉELLE (Firestore, temps réel)
@@ -253,16 +313,23 @@ document.getElementById('dm-search-btn').addEventListener('click', async () => {
 // --- Liste des conversations, en temps réel ---
 function startConversationsListener(){
   const list = document.getElementById('conversations-list');
+  list.innerHTML = '<div class="meta" style="padding:14px 4px;">Chargement de tes conversations…</div>';
   unsubConversations = db.collection('conversations')
     .where('members', 'array-contains', currentUser.uid)
-    .orderBy('lastMessageAt', 'desc')
     .onSnapshot(snap => {
       if(snap.empty){
         list.innerHTML = '<div class="meta" style="padding:14px 4px;">Aucune conversation pour l\'instant — cherche un nom d\'utilisateur ci-dessus pour démarrer.</div>';
         return;
       }
+      // Tri côté client par date du dernier message (évite d'avoir besoin
+      // d'un index composite Firestore pour where + orderBy combinés)
+      const docs = snap.docs.slice().sort((a, b) => {
+        const ta = a.data().lastMessageAt ? a.data().lastMessageAt.toMillis() : 0;
+        const tb = b.data().lastMessageAt ? b.data().lastMessageAt.toMillis() : 0;
+        return tb - ta;
+      });
       list.innerHTML = '';
-      snap.forEach(doc => {
+      docs.forEach(doc => {
         const conv = doc.data();
         const peerUid = conv.members.find(m => m !== currentUser.uid);
         const peerName = conv.memberNames ? conv.memberNames[peerUid] : 'Utilisateur';
@@ -278,7 +345,10 @@ function startConversationsListener(){
         row.addEventListener('click', () => openChatThread({ uid: peerUid, name: peerName, username: peerUsername }));
         list.appendChild(row);
       });
-    }, err => console.error('Conversations:', err));
+    }, err => {
+      console.error('Conversations:', err);
+      list.innerHTML = '<div class="meta" style="padding:14px 4px; color:var(--magenta);">Erreur de chargement des conversations : ' + escapeHtml(err.message) + '</div>';
+    });
 }
 
 // --- Ouvrir un fil de discussion ---
@@ -348,21 +418,10 @@ document.getElementById('chat-send-form').addEventListener('submit', async (e) =
 });
 
 /* ==========================================================================
-   VIDÉOS (Vibe) — retirées pour l'instant
-   Cette fonctionnalité nécessite Firebase Storage (forfait payant "Blaze").
-   Pour rester sur le forfait gratuit "Spark", l'onglet Vibe et la publication
-   de vidéos sont désactivés (voir la tuile "Nouvelle vidéo" marquée
-   data-soon dans l'écran Créer, gérée plus bas avec les autres).
-   Rien n'est simulé : la fonctionnalité reviendra une fois Storage activé.
+   Publication, vidéos, statuts, sondages, événements, communautés : retirés
+   pour l'instant plutôt que simulés. Seuls comptes + messagerie + appels
+   vidéo sont branchés à de vraies données pour l'instant.
    ========================================================================== */
-
-// Les tuiles "Publication / Statut / Sondage / Événement" ne sont pas encore
-// connectées à Firestore — on le dit honnêtement plutôt que de simuler.
-document.querySelectorAll('.create-tile[data-soon]').forEach(tile => {
-  tile.addEventListener('click', () => {
-    alert("Cette fonctionnalité arrive bientôt — pour l'instant, seule la publication de vidéos est branchée à la base de données.");
-  });
-});
 
 /* ==========================================================================
    APPELS VIDÉO RÉELS — WebRTC signalé via Firestore
