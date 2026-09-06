@@ -419,11 +419,23 @@ function openChatThread(peer){
           audio.controls = true;
           audio.src = m.audio;
           audio.style.cssText = 'width:210px; height:34px; display:block;';
+          // Correctif d'un bug connu des navigateurs : les enregistrements
+          // webm n'indiquent pas leur vraie durée tant qu'on n'a pas forcé
+          // un petit saut dans le fichier (sinon ça affiche des durées
+          // absurdes comme "8:59" pour un message de quelques secondes).
+          audio.addEventListener('loadedmetadata', () => {
+            if(audio.duration === Infinity || isNaN(audio.duration)){
+              audio.currentTime = 1e7;
+              const fix = () => { audio.currentTime = 0; audio.removeEventListener('timeupdate', fix); };
+              audio.addEventListener('timeupdate', fix);
+            }
+          });
           bubble.appendChild(audio);
         } else if(m.type === 'image' && m.image){
           const img = document.createElement('img');
           img.src = m.image;
-          img.style.cssText = 'max-width:220px; border-radius:12px; display:block;';
+          img.style.cssText = 'max-width:220px; border-radius:12px; display:block; cursor:pointer;';
+          img.addEventListener('click', () => openLightbox(m.image, 'photo', 'kongovibe-chat'));
           bubble.appendChild(img);
         } else if(m.type === 'video' && m.video){
           const vid = document.createElement('video');
@@ -852,6 +864,28 @@ function endCall(){
 }
 
 /* ---------------------- UTILITAIRES ---------------------- */
+/* ---------------------- VISIONNEUSE PLEIN ÉCRAN + TÉLÉCHARGEMENT ---------------------- */
+function openLightbox(src, type, filename){
+  const img = document.getElementById('lightbox-img');
+  const vid = document.getElementById('lightbox-video');
+  const dl = document.getElementById('lightbox-download');
+  if(type === 'video'){
+    img.style.display = 'none'; img.src = '';
+    vid.style.display = 'block'; vid.src = src;
+    dl.download = (filename || 'kongovibe-video') + '.webm';
+  } else {
+    vid.pause(); vid.style.display = 'none'; vid.src = '';
+    img.style.display = 'block'; img.src = src;
+    dl.download = (filename || 'kongovibe-photo') + '.jpg';
+  }
+  dl.href = src;
+  document.getElementById('lightbox-screen').classList.add('show');
+}
+document.getElementById('lightbox-close').addEventListener('click', () => {
+  document.getElementById('lightbox-screen').classList.remove('show');
+  document.getElementById('lightbox-video').pause();
+});
+
 function avatarHtml(photo){
   if(photo){
     return `<img class="avatar-photo" src="${photo}" alt="">`;
@@ -985,6 +1019,11 @@ document.getElementById('video-record-btn').addEventListener('click', async () =
       preview.muted = false;
       preview.controls = true;
       btn.textContent = '🎥 Recommencer';
+
+      const dlBtn = document.getElementById('video-download-btn');
+      dlBtn.href = preview.src;
+      dlBtn.download = 'kongovibe-video-' + Date.now() + '.webm';
+      dlBtn.style.display = 'block';
     };
     postVideoRecorder.start();
     btn.textContent = '⏹ Arrêter (8s max)';
@@ -1068,6 +1107,7 @@ function resetPostForm(){
   videoPreview.style.display = 'none';
   videoPreview.removeAttribute('src');
   document.getElementById('video-record-btn').textContent = "🎥 Démarrer l'enregistrement";
+  document.getElementById('video-download-btn').style.display = 'none';
   document.getElementById('post-status').style.display = 'none';
   document.getElementById('create-post-screen').classList.remove('show');
   document.getElementById('mode-photo-btn').click();
@@ -1098,7 +1138,7 @@ function startFeedListener(){
           </div>
           ${post.type === 'video' && post.video
             ? `<video class="post-photo" src="${post.video}" controls playsinline></video>`
-            : `<img class="post-photo" src="${post.photo}" alt="">`}
+            : `<img class="post-photo" src="${post.photo}" alt="" style="cursor:pointer;">`}
           ${post.caption ? `<div class="post-caption">${escapeHtml(post.caption)}</div>` : ''}
           <div class="post-actions">
             <div class="post-act like-btn ${liked ? 'liked' : ''}">
@@ -1123,6 +1163,9 @@ function startFeedListener(){
         card.querySelector(`#comment-input-${postId}`).addEventListener('keydown', (e) => {
           if(e.key === 'Enter'){ e.preventDefault(); submitComment(postId); }
         });
+        if(post.type !== 'video'){
+          card.querySelector('.post-photo').addEventListener('click', () => openLightbox(post.photo, 'photo', 'kongovibe-' + postId));
+        }
         feed.appendChild(card);
       });
     }, err => {
@@ -1166,6 +1209,7 @@ function startMyPostsListener(){
             ? `<video src="${post.video}" muted></video>`
             : `<img src="${thumbSrc}" alt="">`}
           <div class="cell-likes">♥ ${post.likes || 0}</div>`;
+        cell.addEventListener('click', () => openLightbox(post.type === 'video' ? post.video : post.photo, post.type === 'video' ? 'video' : 'photo', 'kongovibe-' + doc.id));
         grid.appendChild(cell);
 
         // --- Notification réelle : quelqu'un a aimé ma publication ---
