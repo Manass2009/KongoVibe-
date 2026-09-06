@@ -294,6 +294,43 @@
   .btn.primary{ background: var(--grad-aura); color:#07060c; }
   .btn.ghost{ background: var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); }
 
+  /* ---------- FIL DE PUBLICATIONS ---------- */
+  .compose-card{
+    background: var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px;
+    margin-bottom:16px;
+  }
+  .compose-card input[type="text"]{
+    width:100%; padding:11px 13px; border-radius:12px;
+    background: var(--bg-void); border:1px solid var(--line);
+    color: var(--text-hi); font-size:13.5px; outline:none; margin-bottom:10px;
+  }
+  .compose-row{ display:flex; align-items:center; gap:10px; }
+  .compose-picker{
+    flex:1; font-size:12.5px; color:var(--text-mid);
+    padding:10px 12px; border-radius:12px; background:var(--bg-void);
+    border:1px dashed var(--line); cursor:pointer; text-align:center;
+  }
+  #post-preview{ width:100%; border-radius:14px; margin-bottom:10px; display:none; max-height:260px; object-fit:cover; }
+  .post-card{
+    background: var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .post-head{ display:flex; align-items:center; gap:10px; padding:12px 14px; }
+  .post-head .who{ font-size:13.5px; font-weight:600; }
+  .post-head .meta{ font-size:11px; color:var(--text-low); padding:0; }
+  .post-photo{ width:100%; display:block; max-height:420px; object-fit:cover; background:var(--bg-panel-2); }
+  .post-caption{ padding:12px 14px 4px; font-size:13.5px; color:var(--text-hi); }
+  .post-actions{ display:flex; gap:18px; padding:10px 14px 14px; }
+  .post-act{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-mid); cursor:pointer; }
+  .post-act svg{ display:block; }
+  .post-act.liked{ color: var(--magenta); }
+
   /* ---------- BOTTOM NAV ---------- */
   .navbar{
     flex-shrink:0;
@@ -444,11 +481,26 @@
 
     <div class="views">
 
+      <!-- FIL -->
+      <div class="view active" id="view-feed">
+        <div class="compose-card">
+          <input type="file" id="post-file-input" accept="image/*" style="display:none;">
+          <div class="compose-picker" id="post-picker">📷 Choisir une photo à publier</div>
+          <img id="post-preview" alt="Aperçu">
+          <input type="text" id="post-caption" placeholder="Écrire une légende…">
+          <div class="btn primary glossy" id="post-publish-btn">Publier</div>
+          <div class="meta" id="post-status" style="padding-top:8px; display:none;"></div>
+        </div>
+        <div id="feed-posts">
+          <div class="meta" style="padding:14px 4px;">Chargement du fil…</div>
+        </div>
+      </div>
+
       <!-- MESSAGES -->
-      <div class="view active" id="view-messages">
+      <div class="view" id="view-messages">
         <div class="section-label">Nouvelle discussion</div>
         <div style="display:flex; gap:8px; margin-bottom:6px;">
-          <input type="text" id="dm-search-input" placeholder="nom d'utilisateur (ex. manasse_2)…"
+          <input type="text" id="dm-search-input" placeholder="Nom d'utilisateur…"
                  style="flex:1; padding:11px 13px; border-radius:12px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); font-size:13px; outline:none;">
           <div class="btn primary glossy" id="dm-search-btn" style="flex:0 0 auto; padding:11px 16px;">Chercher</div>
         </div>
@@ -480,7 +532,12 @@
     </div>
 
     <div class="navbar">
-      <div class="nav-item active" data-view="messages">
+      <div class="nav-item active" data-view="feed">
+        <div class="ic-wrap">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 15l-5-5-9 9"/></svg>
+        </div>Fil
+      </div>
+      <div class="nav-item" data-view="messages">
         <div class="ic-wrap">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         </div>Messages
