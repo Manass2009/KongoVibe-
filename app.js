@@ -275,39 +275,61 @@ function conversationId(uidA, uidB){
 }
 
 // --- Recherche d'un utilisateur pour démarrer une conversation ---
-document.getElementById('dm-search-btn').addEventListener('click', async () => {
+// Recherche par PRÉFIXE sur le nom d'utilisateur (pas besoin de taper le
+// nom exact en entier), avec plusieurs résultats possibles, en temps réel
+// pendant la frappe.
+let searchDebounce = null;
+
+async function runUserSearch(){
   const input = document.getElementById('dm-search-input');
   const resultsBox = document.getElementById('dm-search-results');
   const query = normalizeUsername(input.value);
-  resultsBox.innerHTML = '';
-  if(!query) return;
+  if(!query){ resultsBox.innerHTML = ''; return; }
 
-  const uDoc = await db.collection('usernames').doc(query).get();
-  if(!uDoc.exists){
-    resultsBox.innerHTML = '<div class="meta" style="padding:10px 4px;">Aucun utilisateur trouvé avec ce nom.</div>';
-    return;
-  }
-  if(uDoc.data().uid === currentUser.uid){
-    resultsBox.innerHTML = '<div class="meta" style="padding:10px 4px;">C\'est ton propre compte 🙂</div>';
-    return;
-  }
-  const userDoc = await db.collection('users').doc(uDoc.data().uid).get();
-  const peer = userDoc.data();
+  resultsBox.innerHTML = '<div class="meta" style="padding:10px 4px;">Recherche…</div>';
 
-  const row = document.createElement('div');
-  row.className = 'conv';
-  row.innerHTML = `
-    <div class="avatar">👤</div>
-    <div class="conv-info">
-      <div class="conv-top"><span class="who">${escapeHtml(peer.name)}</span></div>
-      <div class="conv-sub"><p>@${escapeHtml(peer.username)}</p></div>
-    </div>`;
-  row.addEventListener('click', () => {
-    openChatThread({ uid: peer.uid, name: peer.name, username: peer.username });
+  try{
+    const snap = await db.collection('users')
+      .where('username', '>=', query)
+      .where('username', '<=', query + '\uf8ff')
+      .limit(8)
+      .get();
+
+    const matches = snap.docs.filter(d => d.data().uid !== currentUser.uid);
+
+    if(matches.length === 0){
+      resultsBox.innerHTML = '<div class="meta" style="padding:10px 4px;">Aucun nom d\'utilisateur ne commence par « ' + escapeHtml(query) + ' ». Vérifie l\'orthographe exacte de son nom d\'utilisateur (pas son nom complet).</div>';
+      return;
+    }
+
     resultsBox.innerHTML = '';
-    input.value = '';
-  });
-  resultsBox.appendChild(row);
+    matches.forEach(doc => {
+      const peer = doc.data();
+      const row = document.createElement('div');
+      row.className = 'conv';
+      row.innerHTML = `
+        <div class="avatar">👤</div>
+        <div class="conv-info">
+          <div class="conv-top"><span class="who">${escapeHtml(peer.name)}</span></div>
+          <div class="conv-sub"><p>@${escapeHtml(peer.username)}</p></div>
+        </div>`;
+      row.addEventListener('click', () => {
+        openChatThread({ uid: peer.uid, name: peer.name, username: peer.username });
+        resultsBox.innerHTML = '';
+        input.value = '';
+      });
+      resultsBox.appendChild(row);
+    });
+  } catch(err){
+    console.error('Recherche:', err);
+    resultsBox.innerHTML = '<div class="meta" style="padding:10px 4px; color:var(--magenta);">Erreur de recherche : ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+document.getElementById('dm-search-btn').addEventListener('click', runUserSearch);
+document.getElementById('dm-search-input').addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(runUserSearch, 350);
 });
 
 // --- Liste des conversations, en temps réel ---
