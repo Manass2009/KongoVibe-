@@ -191,6 +191,8 @@ auth.onAuthStateChanged(async (user) => {
     startFeedListener();
     startMyPostsListener();
     listenForIncomingCalls();
+    startPresence();
+    renderBlockedUsersList();
   } else {
     currentUser = null;
     currentProfile = null;
@@ -198,9 +200,50 @@ auth.onAuthStateChanged(async (user) => {
     if(unsubFeedPosts) unsubFeedPosts();
     if(unsubMyPosts) unsubMyPosts();
     if(unsubIncomingCall) unsubIncomingCall();
+    stopPresence();
     document.getElementById('auth-screen').classList.add('show');
   }
 });
+
+/* ==========================================================================
+   PRÉSENCE — en ligne / hors ligne + « vu à... »
+   Basé sur Firestore (pas de Realtime Database), donc approximatif en cas
+   de fermeture brutale (batterie coupée, app tuée) : mis à jour toutes les
+   25s tant que l'app est ouverte, et à la fermeture normale de l'onglet.
+   ========================================================================== */
+let presenceInterval = null;
+
+function setPresence(online){
+  if(!currentUser) return;
+  db.collection('users').doc(currentUser.uid).update({
+    online, lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(()=>{});
+}
+
+function startPresence(){
+  setPresence(true);
+  presenceInterval = setInterval(() => setPresence(true), 25000);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('beforeunload', () => setPresence(false));
+}
+function stopPresence(){
+  if(presenceInterval) clearInterval(presenceInterval);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  setPresence(false);
+}
+function handleVisibilityChange(){
+  setPresence(document.visibilityState === 'visible');
+}
+
+function formatLastSeen(ts){
+  if(!ts || !ts.toDate) return '';
+  const d = ts.toDate();
+  const now = Date.now();
+  if(now - d.getTime() < 40000) return 'en ligne';
+  const hh = d.getHours().toString().padStart(2,'0');
+  const mm = d.getMinutes().toString().padStart(2,'0');
+  return 'vu à ' + hh + ':' + mm;
+}
 
 function applyProfile(profile){
   const nameEl = document.getElementById('profile-name');
@@ -218,6 +261,39 @@ function applyProfile(profile){
     img.style.display = 'none';
     fallback.style.display = 'flex';
   }
+}
+
+async function renderBlockedUsersList(){
+  const list = document.getElementById('blocked-users-list');
+  const blocked = (currentProfile && currentProfile.blockedUsers) || [];
+  if(blocked.length === 0){
+    list.innerHTML = '<div class="meta" style="padding:6px 4px;">Aucun utilisateur bloqué.</div>';
+    return;
+  }
+  list.innerHTML = '<div class="meta" style="padding:6px 4px;">Chargement…</div>';
+  const rows = await Promise.all(blocked.map(uid => db.collection('users').doc(uid).get()));
+  list.innerHTML = '';
+  rows.forEach(doc => {
+    if(!doc.exists) return;
+    const u = doc.data();
+    const row = document.createElement('div');
+    row.className = 'conv';
+    row.innerHTML = `
+      <div class="avatar">${avatarHtml(u.photo)}</div>
+      <div class="conv-info">
+        <div class="conv-top"><span class="who">${escapeHtml(u.name)}</span></div>
+        <div class="conv-sub"><p>@${escapeHtml(u.username)}</p></div>
+      </div>
+      <div class="btn ghost" style="flex:0 0 auto; padding:8px 12px; font-size:12px;">Débloquer</div>`;
+    row.querySelector('.btn').addEventListener('click', async () => {
+      await db.collection('users').doc(currentUser.uid).update({
+        blockedUsers: firebase.firestore.FieldValue.arrayRemove(u.uid)
+      });
+      currentProfile.blockedUsers = (currentProfile.blockedUsers || []).filter(x => x !== u.uid);
+      renderBlockedUsersList();
+    });
+    list.appendChild(row);
+  });
 }
 
 /* ==========================================================================
@@ -297,7 +373,14 @@ async function runUserSearch(){
       .limit(8)
       .get();
 
-    const matches = snap.docs.filter(d => d.data().uid !== currentUser.uid);
+    const myBlocked = currentProfile.blockedUsers || [];
+    const matches = snap.docs.filter(d => {
+      const u = d.data();
+      if(u.uid === currentUser.uid) return false;
+      if(myBlocked.includes(u.uid)) return false;
+      if((u.blockedUsers || []).includes(currentUser.uid)) return false;
+      return true;
+    });
 
     if(matches.length === 0){
       resultsBox.innerHTML = '<div class="meta" style="padding:10px 4px;">Aucun nom d\'utilisateur ne commence par « ' + escapeHtml(query) + ' ». Vérifie l\'orthographe exacte de son nom d\'utilisateur (pas son nom complet).</div>';
@@ -392,6 +475,14 @@ function startConversationsListener(){
 }
 
 // --- Ouvrir un fil de discussion ---
+let unsubPeerPresence = null;
+let unsubConvMeta = null;
+let peerTypingNow = false;
+let peerLastReadMillis = 0;
+let lastRenderedMessages = [];
+let replyingTo = null;
+let peerBlockedList = [];
+
 function openChatThread(peer){
   activePeer = peer;
   activeConversationId = conversationId(currentUser.uid, peer.uid);
@@ -399,64 +490,203 @@ function openChatThread(peer){
   document.getElementById('chat-peer-handle').textContent = '@' + peer.username;
   document.getElementById('chat-peer-avatar').innerHTML = avatarHtml(peer.photo);
   document.getElementById('chat-thread-screen').classList.add('show');
+  cancelReply();
+  document.getElementById('chat-menu-dropdown').style.display = 'none';
 
   const box = document.getElementById('chat-messages');
   box.innerHTML = '';
+
+  // --- Présence + liste de blocage de la personne en face ---
+  if(unsubPeerPresence) unsubPeerPresence();
+  unsubPeerPresence = db.collection('users').doc(peer.uid).onSnapshot(doc => {
+    const d = doc.data() || {};
+    peerBlockedList = d.blockedUsers || [];
+    if(!peerTypingNow){
+      document.getElementById('chat-peer-handle').textContent = formatLastSeen(d.lastSeen);
+    }
+  });
+
+  // --- Frappe + accusés de lecture (document de la conversation) ---
+  if(unsubConvMeta) unsubConvMeta();
+  unsubConvMeta = db.collection('conversations').doc(activeConversationId).onSnapshot(doc => {
+    const conv = doc.data();
+    if(!conv) return;
+    peerTypingNow = !!(conv.typing && conv.typing[peer.uid]);
+    document.getElementById('chat-peer-handle').textContent = peerTypingNow
+      ? 'en train d\'écrire…'
+      : document.getElementById('chat-peer-handle').textContent;
+    const peerRead = conv.lastRead && conv.lastRead[peer.uid];
+    peerLastReadMillis = peerRead && peerRead.toMillis ? peerRead.toMillis() : 0;
+    renderMessages();
+  });
 
   if(unsubMessages) unsubMessages();
   unsubMessages = db.collection('conversations').doc(activeConversationId)
     .collection('messages').orderBy('createdAt', 'asc')
     .onSnapshot(snap => {
-      box.innerHTML = '';
-      snap.forEach(doc => {
-        const m = doc.data();
-        const mine = m.senderId === currentUser.uid;
-        const bubble = document.createElement('div');
-        const isMedia = m.type === 'audio' || m.type === 'image' || m.type === 'video';
-        bubble.style.cssText = `max-width:75%; margin:6px 0; padding:${isMedia && m.type !== 'audio' ? '4px' : '8px 10px'}; border-radius:16px; font-size:13.5px; line-height:1.4; ${mine ? 'margin-left:auto; background:var(--grad-aura); color:#12141c;' : 'background:var(--bg-panel); border:1px solid var(--line);'}`;
-        if(m.type === 'audio' && m.audio){
-          const audio = document.createElement('audio');
-          audio.controls = true;
-          audio.src = m.audio;
-          audio.style.cssText = 'width:210px; height:34px; display:block;';
-          // Correctif d'un bug connu des navigateurs : les enregistrements
-          // webm n'indiquent pas leur vraie durée tant qu'on n'a pas forcé
-          // un petit saut dans le fichier (sinon ça affiche des durées
-          // absurdes comme "8:59" pour un message de quelques secondes).
-          audio.addEventListener('loadedmetadata', () => {
-            if(audio.duration === Infinity || isNaN(audio.duration)){
-              audio.currentTime = 1e7;
-              const fix = () => { audio.currentTime = 0; audio.removeEventListener('timeupdate', fix); };
-              audio.addEventListener('timeupdate', fix);
-            }
-          });
-          bubble.appendChild(audio);
-        } else if(m.type === 'image' && m.image){
-          const img = document.createElement('img');
-          img.src = m.image;
-          img.style.cssText = 'max-width:220px; border-radius:12px; display:block; cursor:pointer;';
-          img.addEventListener('click', () => openLightbox(m.image, 'photo', 'kongovibe-chat'));
-          bubble.appendChild(img);
-        } else if(m.type === 'video' && m.video){
-          const vid = document.createElement('video');
-          vid.src = m.video;
-          vid.controls = true;
-          vid.style.cssText = 'max-width:220px; border-radius:12px; display:block;';
-          bubble.appendChild(vid);
-        } else {
-          bubble.style.padding = '10px 13px';
-          bubble.textContent = m.text;
-        }
-        box.appendChild(bubble);
-      });
-      box.scrollTop = box.scrollHeight;
+      lastRenderedMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderMessages();
+      markConversationRead();
     }, err => console.error('Messages:', err));
+}
+
+function renderMessages(){
+  const box = document.getElementById('chat-messages');
+  box.innerHTML = '';
+  lastRenderedMessages.forEach(m => {
+    const mine = m.senderId === currentUser.uid;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `display:flex; align-items:flex-end; gap:6px; ${mine ? 'flex-direction:row-reverse;' : ''}`;
+
+    const bubble = document.createElement('div');
+    const isMedia = m.type === 'audio' || m.type === 'image' || m.type === 'video';
+    bubble.style.cssText = `max-width:100%; margin:4px 0; padding:${isMedia && m.type !== 'audio' ? '4px' : '8px 10px'}; border-radius:16px; font-size:13.5px; line-height:1.4; ${mine ? 'background:var(--grad-aura); color:#12141c;' : 'background:var(--bg-panel); border:1px solid var(--line);'}`;
+
+    if(m.replyTo){
+      const quote = document.createElement('div');
+      quote.style.cssText = `font-size:11px; opacity:0.75; border-left:2px solid currentColor; padding:2px 0 2px 6px; margin-bottom:5px;`;
+      quote.textContent = (m.replyTo.senderName || '') + ' : ' + (m.replyTo.preview || '');
+      bubble.appendChild(quote);
+    }
+
+    if(m.type === 'audio' && m.audio){
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = m.audio;
+      audio.style.cssText = 'width:210px; height:34px; display:block;';
+      audio.addEventListener('loadedmetadata', () => {
+        if(audio.duration === Infinity || isNaN(audio.duration)){
+          audio.currentTime = 1e7;
+          const fix = () => { audio.currentTime = 0; audio.removeEventListener('timeupdate', fix); };
+          audio.addEventListener('timeupdate', fix);
+        }
+      });
+      bubble.appendChild(audio);
+    } else if(m.type === 'image' && m.image){
+      const img = document.createElement('img');
+      img.src = m.image;
+      img.style.cssText = 'max-width:220px; border-radius:12px; display:block; cursor:pointer;';
+      img.addEventListener('click', () => openLightbox(m.image, 'photo', 'kongovibe-chat'));
+      bubble.appendChild(img);
+    } else if(m.type === 'video' && m.video){
+      const vid = document.createElement('video');
+      vid.src = m.video;
+      vid.controls = true;
+      vid.style.cssText = 'max-width:220px; border-radius:12px; display:block;';
+      bubble.appendChild(vid);
+    } else {
+      const textEl = document.createElement('div');
+      textEl.style.padding = isMedia ? '0' : '2px 4px';
+      textEl.textContent = m.text;
+      bubble.appendChild(textEl);
+    }
+
+    if(mine){
+      const ticks = document.createElement('div');
+      const read = m.createdAt && peerLastReadMillis >= m.createdAt.toMillis();
+      ticks.style.cssText = `font-size:10px; text-align:right; margin-top:2px; opacity:0.8; ${read ? 'color:var(--violet);' : ''}`;
+      ticks.textContent = read ? '✓✓ Lu' : '✓ Envoyé';
+      bubble.appendChild(ticks);
+    }
+
+    // --- Actions rapides : répondre / supprimer (les siens) ---
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex; flex-direction:column; gap:4px; opacity:0.55;';
+    const replyBtn = document.createElement('div');
+    replyBtn.style.cssText = 'cursor:pointer; font-size:13px;';
+    replyBtn.textContent = '↩';
+    replyBtn.title = 'Répondre';
+    replyBtn.addEventListener('click', () => startReply(m, mine));
+    actions.appendChild(replyBtn);
+    if(mine){
+      const delBtn = document.createElement('div');
+      delBtn.style.cssText = 'cursor:pointer; font-size:13px;';
+      delBtn.textContent = '🗑';
+      delBtn.title = 'Supprimer';
+      let confirming = false;
+      delBtn.addEventListener('click', () => {
+        if(!confirming){
+          confirming = true;
+          delBtn.textContent = '❗';
+          delBtn.style.color = 'var(--magenta)';
+          setTimeout(() => { confirming = false; delBtn.textContent = '🗑'; delBtn.style.color = ''; }, 3000);
+        } else {
+          db.collection('conversations').doc(activeConversationId).collection('messages').doc(m.id).delete();
+        }
+      });
+      actions.appendChild(delBtn);
+    }
+
+    wrap.appendChild(bubble);
+    wrap.appendChild(actions);
+    box.appendChild(wrap);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+function startReply(m, mine){
+  const preview = m.type === 'text' ? m.text
+    : m.type === 'image' ? '📷 Photo'
+    : m.type === 'video' ? '🎥 Vidéo'
+    : m.type === 'audio' ? '🎤 Message vocal' : '';
+  replyingTo = { id: m.id, preview, senderName: mine ? currentProfile.name : activePeer.name };
+  document.getElementById('reply-preview-name').textContent = replyingTo.senderName;
+  document.getElementById('reply-preview-text').textContent = preview;
+  document.getElementById('reply-preview-bar').style.display = 'flex';
+  document.getElementById('chat-input').focus();
+}
+function cancelReply(){
+  replyingTo = null;
+  document.getElementById('reply-preview-bar').style.display = 'none';
+}
+document.getElementById('reply-cancel-btn').addEventListener('click', cancelReply);
+
+function markConversationRead(){
+  if(!activeConversationId) return;
+  db.collection('conversations').doc(activeConversationId).update({
+    ['lastRead.' + currentUser.uid]: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(()=>{});
 }
 
 document.getElementById('chat-back-btn').addEventListener('click', () => {
   document.getElementById('chat-thread-screen').classList.remove('show');
   activeConversationId = null;
   if(unsubMessages) unsubMessages();
+  if(unsubPeerPresence) unsubPeerPresence();
+  if(unsubConvMeta) unsubConvMeta();
+  clearTypingSoon();
+});
+
+/* ---------------------- MENU ⋮ : BLOQUER / SIGNALER ---------------------- */
+document.getElementById('chat-menu-btn').addEventListener('click', () => {
+  const menu = document.getElementById('chat-menu-dropdown');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('chat-block-option').addEventListener('click', async () => {
+  if(!activePeer) return;
+  await db.collection('users').doc(currentUser.uid).update({
+    blockedUsers: firebase.firestore.FieldValue.arrayUnion(activePeer.uid)
+  });
+  currentProfile.blockedUsers = currentProfile.blockedUsers || [];
+  if(!currentProfile.blockedUsers.includes(activePeer.uid)) currentProfile.blockedUsers.push(activePeer.uid);
+  document.getElementById('chat-menu-dropdown').style.display = 'none';
+  document.getElementById('chat-thread-screen').classList.remove('show');
+  renderBlockedUsersList();
+});
+document.getElementById('chat-report-option').addEventListener('click', async () => {
+  if(!activePeer) return;
+  document.getElementById('chat-menu-dropdown').style.display = 'none';
+  try{
+    await db.collection('reports').add({
+      reportedUid: activePeer.uid,
+      reportedUsername: activePeer.username,
+      byUid: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert('Signalement envoyé. Merci.');
+  } catch(err){
+    alert("Le signalement n'a pas pu être envoyé (règle Firestore manquante côté configuration). Réessaie plus tard.");
+  }
 });
 
 async function ensureConversationDoc(){
@@ -474,13 +704,37 @@ async function ensureConversationDoc(){
   return convRef;
 }
 
+/* ---------------------- INDICATEUR « EN TRAIN D'ÉCRIRE » ---------------------- */
+let typingTimeout = null;
+function pingTyping(){
+  if(!activeConversationId) return;
+  db.collection('conversations').doc(activeConversationId).update({
+    ['typing.' + currentUser.uid]: true
+  }).catch(()=>{});
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(clearTypingSoon, 2500);
+}
+function clearTypingSoon(){
+  clearTimeout(typingTimeout);
+  if(!activeConversationId) return;
+  db.collection('conversations').doc(activeConversationId).update({
+    ['typing.' + currentUser.uid]: false
+  }).catch(()=>{});
+}
+document.getElementById('chat-input').addEventListener('input', pingTyping);
+
 // --- Envoyer un message texte ---
 document.getElementById('chat-send-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if(!text || !activeConversationId) return;
+  if(peerBlockedList.includes(currentUser.uid)){
+    alert("Tu ne peux pas écrire à cette personne.");
+    return;
+  }
   input.value = '';
+  clearTypingSoon();
 
   const convRef = await ensureConversationDoc();
   await convRef.update({
@@ -488,12 +742,15 @@ document.getElementById('chat-send-form').addEventListener('submit', async (e) =
     lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
     lastSenderId: currentUser.uid
   });
-  await convRef.collection('messages').add({
+  const msgData = {
     senderId: currentUser.uid,
     type: 'text',
     text,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
+  if(replyingTo) msgData.replyTo = replyingTo;
+  await convRef.collection('messages').add(msgData);
+  cancelReply();
 });
 
 /* ---------------------- ENVOYER UNE PHOTO DANS LE CHAT ---------------------- */
